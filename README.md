@@ -1,2 +1,2 @@
-# hmis-health-portal-imes-mediator
-Node Script for Interoperability between HMIS Health Portal and LGA Integrated Monitoring and Evaluation System(IMES)
+# DIM Mediator
+DHIS2 Mediator for Data Exchange(Interoperability) between MOH Systems and Other Systems
