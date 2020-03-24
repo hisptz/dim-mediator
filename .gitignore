@@ -1,0 +1,11 @@
+auth
+files/*
+node_modules
+scripts
+dump.js
+private/
+public
+report.*
+logs/res/*
+auth.config.js
+metadata.config.js
