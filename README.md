@@ -6,6 +6,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/ae4949d7fce1620e6bee/maintainability)](https://codeclimate.com/github/hisptz/dim-mediator/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/ae4949d7fce1620e6bee/test_coverage)](https://codeclimate.com/github/hisptz/dim-mediator/test_coverage)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
+![GitHub](https://img.shields.io/github/license/hisptz/dim-mediator?style=plastic)
 
 ## Introduction
 
