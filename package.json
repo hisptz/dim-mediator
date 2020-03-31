@@ -32,7 +32,7 @@
     "btoa": "^1.2.1",
     "chalk": "^3.0.0",
     "counter": "^0.1.1",
-    "date-and-time": "^0.11.0",
+    "date-and-time": "^0.13.1",
     "lodash": "^4.17.15",
     "minimist": "^1.2.5",
     "node-emoji": "^1.10.0",
