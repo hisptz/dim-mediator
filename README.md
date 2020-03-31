@@ -2,10 +2,13 @@
 
 ### DHIS2 Mediator for Data Exchange(Interoperability) between MOH Systems and Other Systems
 
-
+![Greetings](https://github.com/hisptz/dim-mediator/workflows/Greetings/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/ae4949d7fce1620e6bee/maintainability)](https://codeclimate.com/github/hisptz/dim-mediator/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/ae4949d7fce1620e6bee/test_coverage)](https://codeclimate.com/github/hisptz/dim-mediator/test_coverage)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
+![Node.js CI](https://github.com/hisptz/dim-mediator/workflows/Node.js%20CI/badge.svg)
+![Labeler](https://github.com/hisptz/dim-mediator/workflows/Labeler/badge.svg)
+![GitHub](https://img.shields.io/github/license/hisptz/dim-mediator?style=plastic)
 
 ## Introduction
 
