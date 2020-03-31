@@ -28,7 +28,7 @@
   "homepage": "https://github.com/hisptz/hmis-health-portal-imes-mediator#readme",
   "dependencies": {
     "async": "^3.1.0",
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
     "btoa": "^1.2.1",
     "chalk": "^3.0.0",
     "counter": "^0.1.1",
@@ -37,7 +37,7 @@
     "minimist": "^1.2.5",
     "node-emoji": "^1.10.0",
     "request": "^2.88.0",
-    "uuid": "^3.3.3"
+    "uuid": "^7.0.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
