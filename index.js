@@ -59,6 +59,16 @@ class MediatorInit {
 	};
 
 	/***
+	 * 
+	 */
+	static executeTest = () => {
+		/***
+		 * 
+		 */
+		return true;
+	}
+
+	/***
 	 *
 	 */
 	startMediator = async () => {
