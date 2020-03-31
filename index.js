@@ -1,5 +1,5 @@
 /***
- *  System Library(Dependencies) Import
+ *
  */
 const os = require('os');
 const date = require('date-and-time');
@@ -7,8 +7,13 @@ const path = require('path');
 const fs = require('fs');
 const async = require('async');
 const _ = require('lodash');
+const chalk = require('chalk');
+
+/***
+ *
+ */
 const MediatorService = require('./services/mediator.service');
-const OrganizationUnit = require('./helpers/organization-unit');
+const OrganizationUnitManager = require('./helpers/organization-unit');
 const mediatorConfig = require('./config/metadata.config');
 const AuthConfig = require('./config/auth.config');
 const Logger = require('./logs/logger.log');
@@ -19,84 +24,33 @@ const SystemInfo = require('./resources/system/details.system');
 const SystemMapping = require('./resources/system/mapping.system');
 const DataValueManagement = require('./resources/data/fetch/datavalue.fetch');
 const DataExchange = require('./resources/data/send/data.send');
+const MetadatManager = require('./resources/system/metadata.system');
 
 /***
- *  Class Mediator Init
+ *
  */
 class MediatorInit {
 	/***
-	 * Global declared variables
+	 *
 	 */
 	globalURL = new Array();
 	static alreadySentURLGlobal = new Array();
 	static orgUnitPayload = new Object();
 	static currentRunningSystem = '';
+	static activeSystems = new Array();
 	static dataSetForCurrentRunningSystem = '';
 	static currentOUMapping;
-	static currentRunningTable;
+	static currentRunningJob;
 	static currentDXMapping;
 	static counter = 1;
 
 	/***
-	 * 
+	 *
 	 */
-	constructor() {
-		if (this.mediatorConfigLauncher().length > 0) {
-			const systemInfo = new SystemInfo();
-			const systemMapping = new SystemMapping();
-			const utilities = new Utilities();
-			MediatorInit.currentRunningSystem = systemInfo.getSystemUID(systemInfo.getCurrentRunningSystem(
-				mediatorConfig
-			));
-			const systemNameId = systemInfo.getSystemUID(systemInfo.getCurrentRunningSystem(mediatorConfig));
-			MediatorInit.dataSetForCurrentRunningSystem = systemInfo.getDatasetForCurrentRunningSystem(
-				mediatorConfig,
-				MediatorInit.currentRunningSystem
-			);
-
-			if (_.has(mediatorConfig[systemNameId], 'generic')) {
-				MediatorInit.currentOUMapping = systemMapping.getOrgUnitMappingForCurrentRunningSystem(
-					mediatorConfig,
-					systemNameId
-				);
-				MediatorInit.currentDXMapping = systemMapping.getDataMappingForCurrentRunningSystem();
-			}
-
-			MediatorInit.currentRunningTable = systemInfo.getCurrentRunningTable(
-				mediatorConfig,
-				systemNameId
-			) !== undefined
-				? systemInfo.getCurrentRunningTable(mediatorConfig, systemNameId)
-				: null;
-
-			if (MediatorInit.currentRunningTable) {
-				utilities.createFolderForSavingLogs(
-					systemNameId,
-					__dirname,
-					MediatorInit.currentRunningTable
-				);
-				utilities.createFoldersForStoringPayloads(
-					systemNameId,
-					__dirname,
-					MediatorInit.currentRunningTable
-				);
-			} else {
-				utilities.createFolderForSavingLogs(
-					systemNameId,
-					__dirname,
-					MediatorInit.currentRunningTable
-				);
-				utilities.createFoldersForStoringPayloads(
-					systemNameId,
-					__dirname,
-					MediatorInit.currentRunningTable
-				);
-			}
-		}
-	}
+	constructor() {}
 
 	/***
-	 * 
+	 *
 	 */
 	mediatorConfigLauncher = () => {
 		return _.filter(_.keys(mediatorConfig), config => {
@@ -105,133 +59,336 @@ class MediatorInit {
 	};
 
 	/***
-	 * 
+	 *
 	 */
 	startMediator = async () => {
-		// Mediator instantiation
-		const organizationUnit = new OrganizationUnit();
+		/***
+		 *
+		 */
+		const organizationUnit = new OrganizationUnitManager();
 		const utilities = new Utilities();
 		const logger = new Logger();
 		const appInfo = new AppInfo();
 		const systemInfo = new SystemInfo();
-		const systemId = MediatorInit.currentRunningSystem;
 
-		try {
-			// Printing Initial message and timestamp for the logs in the logs file
-			appInfo.printingTimestampForSpecificLogOnStart(systemId, __dirname);
-			appInfo.getWelcomeInfo(systemId);
-		} catch (error) {
-			logger.printLogMessageInConsole('error', error, systemId);
-		}
-
-		if (mediatorConfig[systemId] && mediatorConfig[systemId].isAllowed) {
-			const runningReport = systemInfo.getCurrentRunningReport(
-				mediatorConfig,
-				systemId
-			);
-			logger.printLogMessageInConsole(
-				'default',
-				`${systemId.toUpperCase()} is successfully configured for Data Exchange`,
-				systemId.toString()
-			);
-
-			if (mediatorConfig[systemId][runningReport]) {
-				const orgUnits = organizationUnit.getOrgunits(
-					mediatorConfig[systemId][runningReport].orgUnitLevel,
-					mediatorConfig[systemId].dataFromURL,
-					mediatorConfig[systemId].isUsingLiveDhis2,
-					systemId
+		/***
+		 *
+		 */
+		for (const activeSystem of await systemInfo.getActiveSystem(
+			mediatorConfig
+		)) {
+			/***
+			 *
+			 */
+			try {
+				/***
+				 *
+				 */
+				await appInfo.printingTimestampForSpecificLogOnStart(
+					activeSystem,
+					__dirname
 				);
-
-				await this.initiateAPICall(
-					orgUnits,
-					mediatorConfig[systemId].system,
-					mediatorConfig[systemId]
+				/***
+				 *
+				 */
+				await appInfo.getWelcomeInfo(activeSystem);
+			} catch (error) {
+				/***
+				 *
+				 */
+				await logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
 				);
 			}
-		} else {
-			logger.printLogMessageInConsole(
-				'error',
-				`No system is allowed for data exchange.`
+			/***
+			 *
+			 */
+			await logger.printLogMessageInConsole(
+				'default',
+				`${activeSystem.toUpperCase()} is successfully configured for Data Exchange`,
+				activeSystem
 			);
+
+			/***
+			 *
+			 */
+			for (const activeBatch of await _.keys(
+				mediatorConfig[activeSystem]
+			)) {
+				/***
+				 *
+				 */
+				if (
+					(await activeBatch.startsWith('batch')) &&
+					(await utilities.isObject(
+						mediatorConfig[activeSystem][activeBatch]
+					))
+				) {
+					/***
+					 *
+					 */
+					for (const activeJob of await _.keys(
+						mediatorConfig[activeSystem][activeBatch]
+					)) {
+						/***
+						 *
+						 */
+						if (
+							(await activeJob.startsWith('job')) &&
+							(await utilities.isObject(
+								mediatorConfig[activeSystem][
+									activeBatch
+								][activeJob]
+							))
+						) {
+							/***
+							 *
+							 */
+							await utilities.prepareLogEnvironment(
+								__dirname,
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+
+							/***
+							 *
+							 */
+							const orgUnits = await organizationUnit.getOrgUnits(
+								mediatorConfig,
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+
+							/***
+							 *
+							 */
+							await this.initiateAPICall(
+								orgUnits,
+								activeSystem,
+								activeJob,
+								activeBatch,
+								mediatorConfig
+							);
+						}
+					}
+				}
+			}
 		}
 	};
 
 	/***
-	 * 
+	 *
 	 */
-	initiateAPICall = async (orgUnits, systemMediatorConfig) => {
+	initiateAPICall = async (
+		orgUnits,
+		activeSystem,
+		activeJob,
+		activeBatch,
+		mediatorConfig
+	) => {
 		const logger = new Logger();
 		const utilities = new Utilities();
 		const systemInfo = new SystemInfo();
 		const appInfo = new AppInfo();
+		const metadataManager = new MetadatManager();
 
-		const systemNameId = systemInfo.getCurrentRunningSystem(mediatorConfig);
-		const alreadySentURLs = await this.getAlreadySentURL(systemNameId);
+		const alreadySentURLs = await this.getAlreadySentURL(
+			activeSystem,
+			activeBatch,
+			activeJob
+		);
 
-		if (systemNameId) {
-			logger.printLogMessageInConsole(
-				'default',
-				`${systemNameId.toUpperCase()} System is recognized`,
-				MediatorInit.currentRunningSystem.toString()
+		if (
+			await mediatorConfig[activeSystem][activeBatch][activeJob][
+				'isExecuted'
+			]
+		) {
+			/***
+			 *
+			 */
+			const batchFilePath = await utilities.getFilePathForBatches(
+				__dirname,
+				activeSystem,
+				activeBatch,
+				activeJob
 			);
-			const tableName = systemInfo.getCurrentRunningTable(
-				mediatorConfig,
-				systemNameId
+
+			/***
+			 *
+			 */
+			const batches = await utilities.getScheduledJobURLs(
+				batchFilePath,
+				activeBatch
 			);
-			if (tableName === undefined) {
-				logger.printLogMessageInConsole(
-					'default',
-					`There is no TABLE NAME activated to for execution. Please activate configuration.`,
-					systemNameId
-				);
+
+			/***
+			 *
+			 */
+			if ((await batches) !== undefined) {
+				if ((await batches.length) > 0) {
+					MediatorInit.currentRunningSystem = await activeSystem;
+					MediatorInit.getCurrentRunningJob = await activeJob;
+					const sid = activeSystem;
+
+					/***
+					 *
+					 */
+					await utilities.resetValuesForAPIURLToFetchDataInAFile(
+						activeSystem,
+						activeBatch,
+						activeJob
+					);
+					/***
+					 *
+					 */
+					if (
+						await mediatorConfig[activeSystem][
+							activeBatch
+						]
+					) {
+						if (await activeSystem) {
+							let sentURLGlobal = [];
+							const URLToBeSent = await utilities.getAllURLForDataToBeSent(
+								__dirname,
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+							logger.printLogMessageInConsole(
+								'default',
+								`${chalk.green(
+									chalk.bold(
+										activeSystem.toUpperCase()
+									)
+								)} System is recognized`,
+								activeSystem
+							);
+
+							MediatorInit.orgUnitPayload;
+							const orgUnitObject = await utilities.arrayToObject(
+								orgUnits
+							);
+
+							const chunkedOrgunits = await _.chunk(
+								orgUnits,
+								20
+							);
+
+							const chunkedOrgunitsUID = await this.getOrgUnitUids(
+								chunkedOrgunits
+							);
+
+							const period = await metadataManager.getActiveSystemPeriodDimension(
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+
+							const apiFromURL =
+								mediatorConfig[activeSystem]
+									.dataFromURL;
+
+							const data = await metadataManager.getActiveSystemDataDimension(
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+
+							await metadataManager.prepareAnalyticsURLForDataFetch(
+								activeSystem,
+								activeBatch,
+								activeJob,
+								chunkedOrgunitsUID,
+								data,
+								period,
+								apiFromURL
+							);
+
+							sentURLGlobal = await _.uniq([
+								...sentURLGlobal,
+								...alreadySentURLs,
+							]);
+
+							await appInfo.printingTimestampForEverySuccessMessage(
+								__dirname,
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+
+							await appInfo.getDataExchangeLogInfo(
+								mediatorConfig,
+								URLToBeSent,
+								alreadySentURLs,
+								activeSystem
+							);
+
+							await utilities.savingSuccessLogInfoInFile(
+								URLToBeSent,
+								alreadySentURLs,
+								__dirname,
+								activeSystem,
+								activeBatch,
+								activeJob
+							);
+
+							await this.getAPIResult(
+								URLToBeSent,
+								activeSystem,
+								activeBatch,
+								activeJob,
+								sentURLGlobal,
+								orgUnitObject
+							);
+						}
+					} else {
+						/***
+						 *
+						 */
+						// ToDo: Find the best way of implementing log for this part
+						logger.printLogMessageInConsole(
+							'error',
+							`No system is allowed for data exchange.`,
+							`default`
+						);
+					}
+				} else {
+					/***
+					 *
+					 */
+					logger.printLogMessageInConsole(
+						'success',
+						`${chalk.green(
+							chalk.bold('DONE')
+						)} Batch(${mediatorConfig[activeSystem][
+							activeBatch
+						][
+							'batchName'
+						].toUpperCase()}) and JOB(${mediatorConfig[
+							activeSystem
+						][activeBatch][
+							activeJob
+						].toUpperCase()}) for system ${activeSystem.toUpperCase()} has finished`,
+						activeSystem
+					);
+					logger.printLogMessageInConsole(
+						'default',
+						`\n`,
+						activeSystem
+					);
+				}
 			} else {
-				orgUnits.then(async response => {
-					await this.resetValuesForAPIURLToFetchDataInAFile();
-					MediatorInit.orgUnitPayload = await this.arrayToObject(response);
-					const chunkedOrgunits = await _.chunk(response, 20);
-					const chunkedOrgunitsUID = await this.getOrgUnitUids(
-						chunkedOrgunits
-					);
-
-					const report = systemInfo.getCurrentRunningReport(
-						mediatorConfig,
-						systemNameId
-					);
-
-					// Generate data API URLs
-					const period = await this.constructAPIPEDimension(
-						systemNameId,
-						report
-					);
-					const data = await this.constructAPIDataDimension(
-						systemNameId,
-						report
-					);
-					await this.generateURL(chunkedOrgunitsUID, data, period);
-					MediatorInit.alreadySentURLGlobal = await _.uniq([
-						...MediatorInit.alreadySentURLGlobal,
-						...alreadySentURLs,
-					]);
-					await appInfo.printingTimestampForEverySuccessMessage(
-						systemNameId,
-						__dirname,
-						tableName
-					);
-					await appInfo.getDataExchangeLogInfo(
-						this.globalURL,
-						alreadySentURLs,
-						systemNameId
-					);
-					await utilities.savingSuccessLogInfoInFile(
-						this.globalURL,
-						alreadySentURLs,
-						__dirname,
-						systemNameId,
-						tableName
-					);
-					await this.getAnalytics(this.globalURL, systemNameId);
-				});
+				logger.printLogMessageInConsole(
+					'info',
+					`Fail to resolve folder path for system ${chalk.green(
+						chalk.bold(activeSystem)
+					)}`,
+					activeSystem
+				);
 			}
 		}
 	};
@@ -239,327 +396,412 @@ class MediatorInit {
 	/**
 	 *
 	 */
-	getAnalytics = async (analyticsURLS, systemNameId) => {
+	getAPIResult = async (
+		analyticsURLS,
+		activeSystem,
+		activeBatch,
+		activeJob,
+		sentURLGlobal,
+		orgUnitObject
+	) => {
 		const logger = new Logger();
 		const systemInfo = new SystemInfo();
 
-		const systemImportURL = await systemInfo.getCurrentRunningSystemImportURL(
+		const systemImportURL = await systemInfo.getActiveSystemImportURL(
 			mediatorConfig,
-			systemNameId
+			activeSystem
 		);
+
 		if (analyticsURLS) {
 			if (systemImportURL) {
 				try {
-					await new Promise((resolve, reject) => {
-						async.mapLimit(
-							analyticsURLS,
-							1,
-							async.reflect(this.migrateData),
-							(err, result) => {
-								resolve(result);
-							}
+					for (const analyticsURL of await analyticsURLS) {
+						await this.migrateData(
+							analyticsURL,
+							activeSystem,
+							activeBatch,
+							activeJob,
+							sentURLGlobal,
+							orgUnitObject
 						);
-					});
+					}
 				} catch (error) {
 					logger.printLogMessageInConsole('error', error);
 				}
 			} else {
 				logger.printLogMessageInConsole(
 					'error',
-					`There is no Data Import URL for the system ${systemNameId.toUpperCase()}`,
-					systemNameId.toString()
+					`There is no Data Import URL for the system ${activeSystem.toUpperCase()}`,
+					activeSystem.toString()
 				);
 			}
+		} else {
+			logger.printLogMessageInConsole(
+				'error',
+				`There is no URL to fetch data for system ${activeSystem.toUpperCase()}`,
+				activeSystem.toString()
+			);
 		}
 	};
 
 	/**
-					   * 
-					   */
-	migrateData = async (analyticURL, callback) => {
+	 *
+	 */
+	migrateData = async (
+		analyticURL,
+		activeSystem,
+		activeBatch,
+		activeJob,
+		sentURLGlobal,
+		orgUnitObject
+	) => {
 		const systemInfo = new SystemInfo();
 		const appInfo = new AppInfo();
 		const logger = new Logger();
 		const utilities = new Utilities();
 		const authenticator = new Authenticate();
 		const dataExchange = new DataExchange();
+		const systemMapping = new SystemMapping();
 		const SystemPayload = [];
 
-		const systemNameId = await systemInfo.getCurrentRunningSystem(
-			mediatorConfig
-		);
-
 		const dirName = await process.cwd();
-		const tableName = (await systemInfo.getCurrentRunningTable(
-			mediatorConfig,
-			systemNameId
-		)) !== undefined
-			? systemInfo.getCurrentRunningTable(mediatorConfig, systemNameId)
-			: null;
 
 		const successfullyPayloadsFilePath = await utilities.getPayloadsFilePathForSuccessDataExchange(
-			systemNameId,
 			dirName,
-			tableName
+			activeSystem,
+			activeBatch,
+			activeJob
 		);
 
 		const successfullyURLFilePath = await utilities.getURLFilePathForSuccessDataExchange(
-			systemNameId,
 			dirName,
-			tableName
+			activeSystem,
+			activeBatch,
+			activeJob
 		);
 
 		const payloadURLComparatorStatus = await utilities.payloadURLComparator(
 			analyticURL,
-			MediatorInit.alreadySentURLGlobal
+			sentURLGlobal
 		);
 
 		const isUsingHIM = await systemInfo.isUsingHIMMediatorSystem(
 			mediatorConfig,
-			systemNameId
+			activeSystem
+		);
+
+		const orgUnitsMapping = await systemMapping.getActiveSystemOrgUnitMapping(
+			mediatorConfig,
+			activeSystem,
+			activeBatch,
+			activeJob
+		);
+
+		const dataElementsMapping = await systemMapping.getActiveSystemDXMapping(
+			mediatorConfig,
+			activeSystem,
+			activeBatch,
+			activeJob
 		);
 
 		if (payloadURLComparatorStatus) {
 			logger.printLogMessageInConsole(
 				'info',
-				`Data for this URL is already sent to ${systemNameId.toUpperCase()}`,
-				systemNameId
+				`Data for this URL is already sent to ${chalk.green(
+					chalk.bold(activeSystem.toUpperCase())
+				)}`,
+				activeSystem
 			);
 		} else {
 			const dataValueManagement = new DataValueManagement();
-			const systemImportURL = systemInfo.getCurrentRunningSystemImportURL(
+			const systemImportURL = systemInfo.getActiveSystemImportURL(
 				mediatorConfig,
-				systemNameId
-			);
-			const isUsingHIMSystem = systemInfo.isUsingHIMMediatorSystem(
-				mediatorConfig,
-				systemNameId
+				activeSystem
 			);
 
 			try {
-				if (systemNameId) {
+				if (activeSystem) {
 					const analyticsResults = await dataValueManagement.getAnalyticsResults(
 						analyticURL,
-						authenticator.getSystemAuth(AuthConfig, systemNameId)
+						authenticator.getSystemAuth(
+							AuthConfig,
+							activeSystem
+						)
 					);
 
 					if ((await analyticsResults.rows.length) > 0) {
-						// const dataValuesImportTemplate = await dataValueManagement.getDataValuesImportTemplates();
-						const dataValuesImportTemplate = {
-							completeDate: date.format(new Date(), 'YYYY-MM-DD'),
+						// const dataValueBlueprint = await dataValueManagement.getDataValuesImportTemplates();
+						const dataValueBlueprint = await {
+							completeDate: date.format(
+								new Date(),
+								'YYYY-MM-DD'
+							),
 							period: '',
 							dataValues: [],
 						};
 
-						dataValuesImportTemplate.period = await analyticsResults.metaData
-							.dimensions.pe[0];
+						dataValueBlueprint.period = await analyticsResults
+							.metaData.dimensions.pe[0];
 
-						const indexForDX = this.getDataPropertyIndex(
+						const dxIndex = await this.getHeaderPropIndex(
 							analyticsResults,
 							'dx'
 						);
 
-						const indexForCO = await this.getDataPropertyIndex(
+						const coIndex = await this.getHeaderPropIndex(
 							analyticsResults,
 							'co'
 						);
 
-						const indexForOU = this.getDataPropertyIndex(
+						const coSpecialIndex = await utilities.getIndexOfCustomCOC(
+							analyticsResults
+						);
+
+						const ouIndex = await this.getHeaderPropIndex(
 							analyticsResults,
 							'ou'
 						);
-						const indexForValue = this.getDataPropertyIndex(
+						const valueIndex = await this.getHeaderPropIndex(
 							analyticsResults,
 							'value'
 						);
 
 						try {
-							analyticsResults.rows.forEach(row => {
-								const orgUnitId = row[indexForOU];
-								dataValuesImportTemplate.dataValues.push({
-									orgUnit: MediatorInit.orgUnitPayload
-										? MediatorInit.orgUnitPayload[orgUnitId].code
-										: '',
-									dataElement: row[indexForDX],
-									categoryOptionCombo: row[indexForCO]
-										? row[indexForCO]
-										: systemInfo.getCurrentRunningSystemCOC(
+							for (const analyticsResult of await analyticsResults.rows) {
+								const orgUnitId = await analyticsResult[
+									ouIndex
+								];
+								const dataId = await analyticsResult[
+									dxIndex
+								];
+
+								await dataValueBlueprint.dataValues.push(
+									{
+										orgUnit: await systemMapping.getOrgUnitUid(
 											mediatorConfig,
-											systemNameId
+											activeSystem,
+											activeBatch,
+											activeJob,
+											orgUnitsMapping,
+											orgUnitId,
+											orgUnitObject
 										),
-									value: parseInt(row[indexForValue]),
-									comment: '',
-									dataSet: systemInfo.getDatasetForCurrentRunningSystem(
-										mediatorConfig,
-										systemNameId
-									),
-								});
-								SystemPayload.push({
-									orgUnit: MediatorInit.orgUnitPayload
-										? MediatorInit.orgUnitPayload[orgUnitId].code
-										: '',
-									dataElement: row[indexForDX],
-									categoryOptionCombo: row[indexForCO]
-										? row[indexForCO]
-										: systemInfo.getCurrentRunningSystemCOC(
+										dataElement: await systemMapping.getDataElementUid(
 											mediatorConfig,
-											systemNameId
+											activeSystem,
+											activeBatch,
+											activeJob,
+											dataElementsMapping,
+											dataId
 										),
-									value: parseInt(row[indexForValue]),
-									comment: '',
-									dataSet: systemInfo.getDatasetForCurrentRunningSystem(
-										mediatorConfig,
-										systemNameId
-									),
-								});
-							});
+
+										categoryOptionCombo: await utilities.getCategoryOptionCombo(
+											mediatorConfig,
+											activeSystem,
+											coIndex,
+											coSpecialIndex,
+											analyticsResult
+										),
+										comment: '',
+										dataSet: await systemInfo.getDataSetUidForCurrentJob(
+											mediatorConfig,
+											activeSystem,
+											activeBatch,
+											activeJob
+										),
+									}
+								);
+							}
+
 							logger.printLogMessageInConsole(
 								'info',
-								`Data Loaded From DHIS2 HMIS - Sent To ${systemNameId.toUpperCase()}::: ${dataValuesImportTemplate.dataValues.length} Data values`,
-								systemNameId.toString()
+								`Data Loaded From ${chalk.green(
+									chalk.bold(
+										mediatorConfig[
+											activeSystem
+										].systemInfo.from.toUpperCase()
+									)
+								)} - Prepared to be sent to ${chalk.blue(
+									chalk.bold(
+										activeSystem.toUpperCase()
+									)
+								)}::: ${chalk.yellow(
+									chalk.bold(
+										dataValueBlueprint
+											.dataValues
+											.length
+									)
+								)} Data values`,
+								activeSystem.toString()
 							);
 
-							const valueLength = dataValuesImportTemplate.dataValues.length;
-							const results = await dataExchange.importDataToSystem(
-								dataValuesImportTemplate,
+							const loadedDataSize = await dataValueBlueprint
+								.dataValues.length;
+							const secondarySystemAuth = await authenticator.getSecondarySystemAuthForDataExchange(
+								AuthConfig,
+								activeSystem
+							);
+							const dataMigrationResponse = await dataExchange.performDataMigrationAcrossSystems(
+								dataValueBlueprint,
 								systemImportURL,
-								authenticator.getSecondarySystemAuthForDataExchange(
-									AuthConfig,
-									systemNameId
-								),
-								systemNameId
+								secondarySystemAuth,
+								activeSystem
 							);
 
-							// Walter here is the ending point where next time if you want to resume you are going to
-							if (results.data.status == 200) {
-								const alreadySentURLs = await dataExchange.getAlreadySentAPIURLs(
-									systemNameId,
-									dirName,
-									tableName
-								);
-								const alreadySentAnalyticURL = await dataExchange.getUniqueAlreadySentURL(
-									MediatorInit.alreadySentURLGlobal,
-									alreadySentURLs
-								);
+							if (
+								await mediatorConfig[
+									activeSystem
+								].isUsingHIM
+							) {
+								if (
+									dataMigrationResponse.data
+										.status === 200
+								) {
+									const alreadySentURLs = await dataExchange.getActiveSystemAlreadySentAPIURLs(
+										activeSystem,
+										activeBatch,
+										activeJob
+									);
 
-								await appInfo.getAlreadySentLogInfo(
-									this.globalURL,
-									alreadySentAnalyticURL,
-									systemNameId
-								);
-								const apiURLAlreadySentPathFile = await utilities.getAlreadySentPayloadFilePath(
-									systemNameId,
-									dirName,
-									tableName
-								);
+									const alreadySentAnalyticURL = await dataExchange.getUniqueAlreadySentURL(
+										MediatorInit.alreadySentURLGlobal,
+										alreadySentURLs
+									);
 
-								await utilities.savingAlreadySentURL(
-									apiURLAlreadySentPathFile,
-									analyticURL,
-									systemNameId
-								);
-								await utilities.savingSuccessfullySentDataPayload(
-									successfullyPayloadsFilePath,
-									successfullyURLFilePath,
-									systemNameId,
-									dataValuesImportTemplate,
-									analyticURL,
-									results,
-									valueLength
-								);
+									const URLToBeSent = await utilities.getAllURLForDataToBeSent(
+										__dirname,
+										activeSystem,
+										activeBatch,
+										activeJob
+									);
+
+									await appInfo.getAlreadySentLogInfo(
+										URLToBeSent,
+										alreadySentAnalyticURL,
+										activeSystem
+									);
+									const apiURLAlreadySentPathFile = await utilities.getAlreadySentPayloadFilePath(
+										activeSystem,
+										activeBatch,
+										activeJob
+									);
+
+									await utilities.savingAlreadySentURL(
+										apiURLAlreadySentPathFile,
+										analyticURL,
+										activeSystem
+									);
+									await utilities.savingSuccessfullySentDataPayload(
+										successfullyPayloadsFilePath,
+										successfullyURLFilePath,
+										activeSystem,
+										dataValueBlueprint,
+										analyticURL,
+										dataMigrationResponse,
+										loadedDataSize
+									);
+								} else {
+									logger.printLogMessageInConsole(
+										'error',
+										`Response Message: ${chalk.red(
+											chalk.bold(
+												dataMigrationResponse
+													.data
+													.Message
+											)
+										)} Error Code: ${chalk.yellow(
+											chalk.bold(
+												dataMigrationResponse
+													.data
+													.status
+											)
+										)}`,
+										activeSystem
+									);
+								}
 							} else {
-								logger.printLogMessageInConsole(
-									'error',
-									`${results.data.Message}`,
-									systemNameId.toString()
-								);
+								// ToDO: Implement data exchange not through HIM
 							}
 						} catch (error) {
 							logger.printLogMessageInConsole(
 								'error',
 								error,
-								systemNameId.toString()
+								activeSystem.toString()
 							);
 						}
 					} else {
 						logger.printLogMessageInConsole(
 							'info',
 							`Data for this URL return empty rows`,
-							systemNameId.toString()
+							activeSystem.toString()
 						);
-						const emptyResURLs = _.uniq(utilities.getURLForEmptyData());
+						const emptyResURLs = await _.uniq(
+							utilities.getURLForEmptyData(
+								__dirname,
+								activeSystem,
+								activeBatch,
+								activeJob
+							)
+						);
 
-						if (!_.includes(emptyResURLs, analyticURL)) {
+						if (
+							!_.includes(emptyResURLs, analyticURL)
+						) {
 							// ToDO: Save to the file URL with Empty Rows
-							const apiURLForDataReturningEmptyRows = utilities.getPathForEmptyFetchedData(
+							const apiURLForDataReturningEmptyRows = await utilities.getPathForEmptyFetchedData(
 								dirName,
-								systemNameId
+								activeSystem,
+								activeBatch,
+								activeJob
 							);
-							utilities.savingEmptyRowsDataURL(
+							await utilities.savingEmptyRowsDataURL(
 								apiURLForDataReturningEmptyRows,
-								systemNameId
+								activeSystem,
+								analyticURL
 							);
 						}
 					}
 				}
-			} catch (e) {
-				callback(e, null);
+			} catch (error) {
+				/***
+				 *
+				 */
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
 			}
 		}
 	};
 
-	constructAPIGenericPEDimension = systemId => {
-		const utilities = new Utilities();
-
-		if (mediatorConfig) {
-			return _.flattenDeep(
-				_.keys(mediatorConfig[systemId]).map(key => {
-					return utilities.isObject(mediatorConfig[systemId][key])
-						? _.keys(mediatorConfig[systemId][key]).map(subkey => {
-							return subkey.startsWith('job') &&
-								mediatorConfig[systemId][key][subkey]['execute']
-								? _.map(
-									mediatorConfig[systemId][key][subkey].pe.periods,
-									period => {
-										return mediatorConfig[systemId][key][subkey].pe
-											.subPeriods.length > 0
-											? _.map(
-												mediatorConfig[systemId][key][subkey][pe][
-												subPeriods
-												],
-												subPeriod => {
-													return period + subPeriod;
-												}
-											)
-											: period;
-									}
-								)
-								: null;
-						})
-						: null;
-				})
-			).filter(Boolean);
-		}
-	};
-
-	constructAPIGenericDataDimension = () => { };
-
-	getAlreadySentURL = systemName => {
+	/***
+	 *
+	 */
+	getAlreadySentURL = (activeSystem, activeBatch, activeJob) => {
+		/***
+		 *
+		 */
 		const logger = new Logger();
-		if (MediatorInit.currentRunningTable) {
+
+		/***
+		 *
+		 */
+		if (activeJob) {
 			const apiURLAlreadySentPathFile = path.join(
 				__dirname,
 				'private',
 				'log',
-				MediatorInit.currentRunningSystem,
-				MediatorInit.currentRunningTable,
+				activeSystem,
+				activeBatch,
+				activeJob,
 				'sent.txt'
 			);
 			try {
 				return fs
 					.readFileSync(apiURLAlreadySentPathFile)
 					.toString()
-					.split('\r\n')
+					.split('\n')
 					.filter(Boolean);
 			} catch (error) {
 				logger.printLogMessageInConsole('error', error);
@@ -569,14 +811,14 @@ class MediatorInit {
 				__dirname,
 				'private',
 				'log',
-				MediatorInit.currentRunningSystem,
+				activeSystem,
 				'sent.txt'
 			);
 			try {
 				return fs
 					.readFileSync(apiURLAlreadySentPathFile)
 					.toString()
-					.split('\r\n')
+					.split('\n')
 					.filter(Boolean);
 			} catch (error) {
 				logger.printLogMessageInConsole('error', error);
@@ -590,21 +832,17 @@ class MediatorInit {
 			__dirname,
 			'private',
 			'log',
-			MediatorInit.currentRunningSystem.toString(),
+			activeSystem,
 			'empty.txt'
 		);
 		try {
 			return fs
 				.readFileSync(apiURLAlreadySentPathFile)
 				.toString()
-				.split('\r\n')
+				.split('\n')
 				.filter(Boolean);
 		} catch (error) {
-			logger.printLogMessageInConsole(
-				'error',
-				error,
-				MediatorInit.currentRunningSystem.toString()
-			);
+			logger.printLogMessageInConsole('error', error, activeSystem);
 		}
 	};
 
@@ -618,204 +856,10 @@ class MediatorInit {
 		}
 	};
 
-	constructAPIOrgUnitDimension = orgunitUids => {
-		if (orgunitUids) {
-			this.constructAPIPEDimension(orgunitUids, '');
-		}
-	};
-
-	constructAPIPEDimension = async (system, report) => {
-		const logger = new Logger();
-		if (!report) {
-			return await _.flatten(
-				_.map(
-					mediatorConfig[system].generic.genericTable.pe.periods,
-					period => {
-						return mediatorConfig[system].generic.genericTable.pe.subPeriods
-							.length > 0
-							? _.map(
-								mediatorConfig[system].generic.genericTable.pe.subPeriods,
-								subPeriod => {
-									return period + subPeriod;
-								}
-							)
-							: period;
-					}
-				)
-			);
-		} else {
-			return await _.flatten(
-				_.map(
-					mediatorConfig[system][report][MediatorInit.currentRunningTable].pe
-						.periods,
-					period => {
-						return mediatorConfig[system][report][
-							MediatorInit.currentRunningTable
-						].pe.subPeriods.length > 0
-							? _.map(
-								mediatorConfig[system][report][
-									MediatorInit.currentRunningTable
-								].pe.subPeriods,
-								subPeriod => {
-									return period + subPeriod;
-								}
-							)
-							: period;
-					}
-				)
-			);
-		}
-	};
-
-	constructAPIDataDimension = (system, report) => {
-		if (!report) {
-			return _.chunk(
-				_.map(mediatorConfig[system].generic.genericTable.dx.data, data => {
-					return data.id;
-				}),
-				50
-			);
-		} else {
-			return _.chunk(
-				_.map(
-					mediatorConfig[system][report][MediatorInit.currentRunningTable].dx
-						.data,
-					data => {
-						return data.id;
-					}
-				),
-				50
-			);
-		}
-	};
-
-	arrayToObject = orgUnits => {
-		if (orgUnits) {
-			return orgUnits.reduce((obj, item) => {
-				obj[item.id] = item;
-				return obj;
-			}, {});
-		}
-	};
-
-	resetValuesForAPIURLToFetchDataInAFile = () => {
-		const logger = new Logger();
-		if (MediatorInit.currentRunningTable) {
-			const apiURLPathFile = path.join(
-				__dirname,
-				'private',
-				'log',
-				MediatorInit.currentRunningSystem.toString(),
-				MediatorInit.currentRunningTable.toString(),
-				'fetch.txt'
-			);
-
-			fs.truncate(apiURLPathFile, 0, () => {
-				logger.printLogMessageInConsole(
-					'info',
-					`Successfully reset values of API URL for data fetching`,
-					MediatorInit.currentRunningSystem.toString()
-				);
-			});
-		} else {
-			const apiURLPathFile = path.join(
-				__dirname,
-				'private',
-				'log',
-				MediatorInit.currentRunningSystem.toString(),
-				'fetch.txt'
-			);
-
-			fs.truncate(apiURLPathFile, 0, () => {
-				logger.printLogMessageInConsole(
-					'info',
-					`Successfully reset values of API URL for data fetching`,
-					MediatorInit.currentRunningSystem.toString()
-				);
-			});
-		}
-	};
-
-	generateURL = async (orgUnits, dataElements, periods) => {
-		const mediatorService = new MediatorService();
-		const utilities = new Utilities();
-		const logger = new Logger();
-		let apiURLPathFile = '';
-		if (MediatorInit.currentRunningTable) {
-			apiURLPathFile = path.join(
-				__dirname,
-				'private',
-				'log',
-				MediatorInit.currentRunningSystem.toString(),
-				MediatorInit.currentRunningTable.toString(),
-				'fetch.txt'
-			);
-		} else {
-			apiURLPathFile = path.join(
-				__dirname,
-				'private',
-				'log',
-				MediatorInit.currentRunningSystem.toString(),
-				'fetch.txt'
-			);
-		}
-
-		if (orgUnits && dataElements && periods) {
-			periods.forEach(pe => {
-				orgUnits.forEach(orgUnit => {
-					const ou = utilities.joinBySymbol(orgUnit, ';');
-					dataElements.forEach(dataElement => {
-						const dx = utilities.joinBySymbol(dataElement, ';');
-						const url = mediatorService.generateGenericAnalyticsURLForSystems(
-							ou,
-							dx,
-							pe,
-							mediatorConfig[MediatorInit.currentRunningSystem].dataFromURL,
-							MediatorInit.currentRunningSystem
-						);
-						try {
-							fs.open(apiURLPathFile, 'a', (err, fd) => {
-								if (err)
-									logger.printLogMessageInConsole(
-										'error',
-										err,
-										MediatorInit.currentRunningSystem.toString()
-									);
-								try {
-									fs.appendFile(apiURLPathFile, `${url}\r\n`, err => {
-										if (err)
-											logger.printLogMessageInConsole(
-												'error',
-												err,
-												MediatorInit.currentRunningSystem.toString()
-											);
-									});
-								} catch (error) {
-									logger.printLogMessageInConsole(
-										'error',
-										error,
-										MediatorInit.currentRunningSystem.toString()
-									);
-								}
-							});
-						} catch (error) {
-							logger.printLogMessageInConsole(
-								'error',
-								error,
-								MediatorInit.currentRunningSystem.toString()
-							);
-						}
-						this.globalURL.push(url);
-					});
-				});
-			});
-		}
-	};
-
 	/**
-			 *
-			 */
-	getDataPropertyIndex = (analyticsResults, dataProp) => {
+	 *
+	 */
+	getHeaderPropIndex = (analyticsResults, dataProp) => {
 		return _.findIndex(analyticsResults.headers, data => {
 			return data.name == dataProp;
 		});

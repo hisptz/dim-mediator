@@ -11,36 +11,36 @@ class Logger {
 	   * @param {*} status
 	   * @param {*} message
 	   */
-	printLogMessageInConsole = (status, message, systemName) => {
+	printLogMessageInConsole = (status, message, activeSystem) => {
 		if (status === 'default') {
 			if (message) {
 				console.log(`${emoji.get('bookmark')}  ${message}`);
-				this.storeConsoleLogsInFile(message, systemName);
+				this.storeConsoleLogsInFile(message, activeSystem);
 			}
 		} else if (status === 'error') {
 			if (message) {
 				console.log(`${emoji.get('x')}  ${message}`);
-				this.storeConsoleLogsInFile(message, systemName);
+				this.storeConsoleLogsInFile(message, activeSystem);
 			}
 		} else if (status === 'success') {
 			if (message) {
 				console.log(`${emoji.get('heavy_check_mark')}  ${message}`);
-				this.storeConsoleLogsInFile(message, systemName);
+				this.storeConsoleLogsInFile(message, activeSystem);
 			}
 		} else if (status === 'info') {
 			if (message) {
 				console.log(`${emoji.get('information_source')}  ${message}`);
-				this.storeConsoleLogsInFile(message, systemName);
+				this.storeConsoleLogsInFile(message, activeSystem);
 			}
 		} else if (status === 'sent') {
 			if (message) {
 				console.log(`${emoji.get('pushpin')}  ${message}`);
-				this.storeConsoleLogsInFile(message, systemName);
+				this.storeConsoleLogsInFile(message, activeSystem);
 			}
 		} else {
 			if (message) {
 				console.log(`${emoji.get('bookmark')}  ${message}`);
-				this.storeConsoleLogsInFile(message, systemName);
+				this.storeConsoleLogsInFile(message, activeSystem);
 			}
 		}
 	};
@@ -49,11 +49,11 @@ class Logger {
 	   *
 	   * @param {*} msg
 	   */
-	storeConsoleLogsInFile = (msg, systemName) => {
-		if (typeof systemName === undefined) {
+	storeConsoleLogsInFile = (msg, activeSystem) => {
+		if (typeof activeSystem === undefined) {
 			if (msg) {
 				const consoleLogsFilePath = path.join(
-					__dirname,
+					process.cwd(),
 					'res',
 					'logs.txt'
 				);
@@ -66,37 +66,42 @@ class Logger {
 							`${date.format(new Date(), '(ddd) YYYY-MM-DD hh:mm:ssA')}: ${msg}\n`,
 							err => {
 								if (err)
-									this.printLogMessageInConsole('error', err, systemName);
+									this.printLogMessageInConsole('error', err, activeSystem);
 							}
 						);
 					});
 				} catch (error) {
-					this.printLogMessageInConsole('error', error, systemName);
+					this.printLogMessageInConsole('error', error, activeSystem);
 				}
 			}
 		} else {
 			if (msg) {
 				const consoleLogsFilePath = path.join(
-					__dirname,
+					process.cwd(),
 					'res',
-					systemName,
+					activeSystem,
 					'logs.txt'
 				);
 
 				try {
 					fs.open(consoleLogsFilePath, 'a', (err, fd) => {
-						if (err) throw err;
-						fs.appendFile(
-							consoleLogsFilePath,
-							`${date.format(new Date(), '(ddd) YYYY-MM-DD hh:mm:ssA')}: ${msg}\n`,
-							err => {
-								if (err)
-									this.printLogMessageInConsole('error', err, systemName);
-							}
-						);
+						try {
+							fs.appendFile(
+								consoleLogsFilePath,
+								`${date.format(new Date(), '(ddd) YYYY-MM-DD hh:mm:ssA')}: ${msg}\n`,
+								err => {
+									if (err) {
+										// console.log("CAINAMIST::: ", err);
+										// this.printLogMessageInConsole('error', err, activeSystem);
+									}
+								}
+							);
+						} catch (error) {
+							// this.printLogMessageInConsole('error', error, activeSystem);
+						}
 					});
 				} catch (error) {
-					this.printLogMessageInConsole('error', error, systemName);
+					// this.printLogMessageInConsole('error', error, activeSystem);
 				}
 			}
 		}

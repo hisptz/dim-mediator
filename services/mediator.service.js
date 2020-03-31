@@ -1,44 +1,88 @@
+/***
+ *
+ */
 const axios = require('axios');
+const _ = require('lodash');
+
+/***
+ *
+ */
 const Logger = require('../logs/logger.log');
 const Authenticate = require('../auth/system.auth');
 const Utilities = require('../utils/utils');
 const AuthConfig = require('../config/auth.config');
 
+/***
+ *
+ */
 class MediatorService {
 	APIURLS = [];
 
 	/**
-	 * 
+	 *
 	 */
 	constructor() { }
 
-	/**
-	 * 
+	/***
+	 *
 	 */
-	generateGenericAnalyticsURLForSystems = (
-		ou,
-		dx,
-		pe,
-		systemURL,
-		systemNameId
-	) => {
+	async generateAnalyticsURL(activeSystem, apiFromURL, pe, ou, dx) {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		const authenticator = new Authenticate();
 		const utilities = new Utilities();
-		if (systemNameId) {
-			const authenticator = new Authenticate();
-			const hostname = `https://${authenticator.getSystemAuthForAPICall(AuthConfig, systemNameId)}${utilities.URLSanitizer(systemURL)}`;
-			const api = `api/analytics.json`;
-			const dataDime = `dimension=dx:${dx}`;
-			const categoryOptionComboDimension = `dimension=co`;
-			const periodDime = `filter=pe:${pe}`;
-			const orgunitDime = `dimension=ou:${ou}`;
-			const props = `displayProperty=NAME&skipMeta=false`;
-			const APIUrl = `${hostname}${api}?${dataDime}&${periodDime}&${orgunitDime}&${props}`;
-			return APIUrl;
-		}
+
+		/***
+		 *
+		 */
+		const hostname = await `https://${authenticator.getSystemAuthForAPICall(
+			AuthConfig,
+			activeSystem
+		)}${utilities.URLSanitizer(apiFromURL)}`;
+		const api = await `api/analytics.json`;
+		const dataDime = await `dimension=dx:${
+			dx.id
+			}&${await utilities.joinBySymbol(
+				await this.getFormattedAnalyticsDXUrl(dx, activeSystem),
+				'&'
+			)}`;
+		const periodDime = await `filter=pe:${pe}`;
+		const orgunitDime = `dimension=ou:${ou}`;
+		const props = await `displayProperty=NAME&skipMeta=false`;
+		const APIUrl = await `${hostname}${api}?${dataDime}&${periodDime}&${orgunitDime}&${props}`;
+		return APIUrl;
+	}
+
+	/***
+	 *
+	 */
+	getFormattedAnalyticsDXUrl = (dx, activeSystem) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		const utilities = new Utilities();
+		/***
+		 *
+		 */
+		return _.has(dx, 'dimensions') && dx.dimensions.length > 0
+			? _.map(dx.dimensions, category => {
+				return `dimension=${
+					category.id
+					}:${utilities.joinBySymbol(
+						category.options,
+						';'
+					)}`;
+			})
+			: dx.type === 'dataElement'
+				? `dimension=co`
+				: [];
 	};
 
 	/**
-	 * 
+	 *
 	 */
 	generateImportURL = () => {
 		const ouAttr = 'hu3ccByV59Z';
@@ -54,7 +98,7 @@ class MediatorService {
 	};
 
 	/**
-	 * 
+	 *
 	 */
 	generateImportForHIM() {
 		const HIMAddressInTestEnvironment = `https://him-dev.moh.go.tz/rest.api/post/JSON/health-datashairing-portal-imes`;
@@ -66,7 +110,7 @@ class MediatorService {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	getData = async url => {
 		const logger = new Logger();
@@ -74,7 +118,9 @@ class MediatorService {
 		try {
 			return await axios
 				.get(url, authenticator.getHMISPortalSuperAuth())
-				.catch(error => logger.printLogMessageInConsole('error', error));
+				.catch(error =>
+					logger.printLogMessageInConsole('error', error)
+				);
 		} catch (error) {
 			logger.printLogMessageInConsole('error', error);
 		}
@@ -82,6 +128,6 @@ class MediatorService {
 }
 
 /**
- * 
+ *
  */
 module.exports = MediatorService;

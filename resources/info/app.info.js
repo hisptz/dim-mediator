@@ -1,202 +1,386 @@
-const Logger = require('../../logs/logger.log');
+/***
+ *
+ */
 const date = require('date-and-time');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
+const _ = require('lodash');
 
 
+/***
+ *
+ */
+const Logger = require('../../logs/logger.log');
+const SystemInfo = require('../system/details.system');
+const Utilities = require('../../utils/utils');
+const mediatorConfig = require('../../config/metadata.config');
+
+
+/***
+ *
+ */
 class AppInfo {
+	/***
+	 *
+	 */
 	constructor() {}
 
-	getWelcomeInfo = currentRunningSystem => {
+	/***
+	 *
+	 */
+	getWelcomeInfo = async currentRunningSystem => {
+		/***
+		 *
+		 */
 		const logger = new Logger();
+		/***
+		 *
+		 */
 		logger.printLogMessageInConsole(
 			'default',
 			`-------------------------------------`,
 			currentRunningSystem.toString()
 		);
+		/***
+		 *
+		 */
 		logger.printLogMessageInConsole(
 			'default',
 			`DHIS2 Generic Data Exchange Mediator`,
 			currentRunningSystem.toString()
 		);
+		/***
+		 *
+		 */
 		logger.printLogMessageInConsole(
 			'default',
 			`-------------------------------------`,
 			currentRunningSystem.toString()
 		);
+		/***
+		 *
+		 */
 		logger.printLogMessageInConsole(
 			'default',
-			`Mediator Initiated...  ${new Date()}`,
+			`Mediator Initiated...  ${chalk.green(
+				chalk.bold(new Date())
+			)}`,
 			currentRunningSystem.toString()
 		);
+		/***
+		 *
+		 */
 		logger.printLogMessageInConsole(
 			'default',
-			`Mediator RUN ON::: ${os.platform()} Operating System(OS)`,
+			`Mediator RUN ON::: ${chalk.green(
+				chalk.bold(os.platform().toUpperCase())
+			)} Operating System(OS)`,
 			currentRunningSystem.toString()
 		);
 	};
 
-	getAlreadySentLogInfo = (globalURLs, alreadySentURLs, systemNameId) => {
+	/***
+	 *
+	 */
+	getAlreadySentLogInfo = (globalURLs, alreadySentURLs, activeSystem) => {
+		/***
+		 *
+		 */
 		const logger = new Logger();
+		/***
+		 *
+		 */
 		logger.printLogMessageInConsole(
 			'sent',
-			`Sent ${chalk.green.bold(alreadySentURLs.length + 1)} out of ${chalk.green.bold(globalURLs.length)} to ${chalk.green(systemNameId.toUpperCase())} System`,
-			systemNameId
+			`Sent ${chalk.green.bold(
+				alreadySentURLs.length + 1
+			)} out of ${chalk.green.bold(
+				globalURLs.length
+			)} to ${chalk.green(activeSystem.toUpperCase())} System`,
+			activeSystem
 		);
 	};
 
-	getDataExchangeLogInfo = (globalUrl, alreadySentUrl, systemNameId) => {
+	/***
+	 *
+	 */
+	getDataExchangeLogInfo = async (
+		mediatorConfig,
+		globalUrl,
+		alreadySentUrl,
+		activeSystem
+	) => {
+		/***
+		 *
+		 */
 		const logger = new Logger();
+		/***
+		 *
+		 */
 		try {
+			/***
+			 *
+			 */
 			logger.printLogMessageInConsole(
 				'default',
 				`-----------------------------------------------`,
-				systemNameId
+				activeSystem
 			);
+			/***
+			 *
+			 */
 			logger.printLogMessageInConsole(
 				'info',
-				`Total URLS Generated For Data Exchange::: ${globalUrl.length}`,
-				systemNameId
+				`Total URLS Generated For Data Exchange::: ${chalk.yellow(chalk.bold(globalUrl.length))}`,
+				activeSystem
 			);
+			/***
+			 *
+			 */
 			logger.printLogMessageInConsole(
 				'info',
-				`Data Sent DHIS2 HMIS to ${systemNameId.toUpperCase()} ${
-					alreadySentUrl.length + 1
-				} out of ${globalUrl.length}`,
-				systemNameId
+				`Data Sent ${chalk.green(
+					chalk.bold(
+						mediatorConfig[
+							activeSystem
+						].systemInfo.from.toUpperCase()
+					)
+				)} to ${chalk.blue(
+					chalk.bold(activeSystem.toUpperCase())
+				)} ${chalk.yellow(chalk.bold(alreadySentUrl.length + 1))} out of ${
+				chalk.yellow(chalk.bold(globalUrl.length))
+				}`,
+				activeSystem
 			);
+			/***
+			 *
+			 */
 			logger.printLogMessageInConsole(
 				'default',
 				`***********************************************`,
-				systemNameId
+				activeSystem
 			);
 		} catch (error) {
-			logger.printLogMessageInConsole('error', error, systemNameId);
+			/***
+			 *
+			 */
+			logger.printLogMessageInConsole('error', error, activeSystem);
 		}
 	};
 
-	printingTimestampForEverySuccessMessage = (systemNameId, dirName, tableName) => {
+	/***
+	 *
+	 */
+	printingTimestampForEverySuccessMessage = (
+		dirName,
+		activeSystem,
+		activeBatch,
+		activeJob
+	) => {
+		/***
+		 *
+		 */
 		const logger = new Logger();
+		/***
+		 *
+		 */
 		let initialMessage = ``;
-		if (tableName) {
+		/***
+		 *
+		 */
+		if (activeJob) {
 			initialMessage += `\r\n\n----------------------------------------------------------------------------------------------------------\n`;
-			initialMessage += `DHIS2 Generic Data Exchange Mediator LOGS By Date:  ${date.format(new Date(), 'ddd, MMM. DD YYYY h:m:s A')} - Developed By: UDSM DHIS2 Team\n`;
+			initialMessage += `DHIS2 Generic Data Exchange Mediator LOGS By Date:  ${date.format(
+				new Date(),
+				'ddd, MMM. DD YYYY h:m:s A'
+			)} - Developed By: UDSM DHIS2 Team\n`;
 			initialMessage += `**********************************************************************************************************\n`;
 			const dataSuccessLogFilePath = path.join(
 				dirName,
 				'private',
 				'log',
-				systemNameId,
-				tableName,
+				activeSystem,
+				activeBatch,
+				activeJob,
 				'success.txt'
 			);
 
+			/***
+			 *
+			 */
 			try {
+				/***
+				 *
+				 */
 				fs.open(dataSuccessLogFilePath, 'a', (err, fd) => {
+					/***
+					 *
+					 */
 					if (err)
 						logger.printLogMessageInConsole(
 							'error',
 							err,
-							systemNameId
+							activeSystem
 						);
-					fs.appendFile(dataSuccessLogFilePath, `${initialMessage}`, err => {
-						if (err)
-							logger.printLogMessageInConsole(
-								'error',
-								err,
-								systemNameId
-							);
-					});
+					fs.appendFile(
+						dataSuccessLogFilePath,
+						`${initialMessage}`,
+						err => {
+							if (err)
+								logger.printLogMessageInConsole(
+									'error',
+									err,
+									activeSystem
+								);
+						}
+					);
 				});
 			} catch (error) {
+				/***
+				 *
+				 */
+
 				this.printLogMessageInConsole(
 					'error',
 					error,
-					systemNameId,
-					tableName
+					activeSystem,
+					activeJob
 				);
 			}
 		} else {
+			/***
+			 *
+			 */
 			initialMessage += `\r\n\n----------------------------------------------------------------------------------------------------------\n`;
-			initialMessage += `DHIS2 Generic Data Exchange Mediator LOGS By Date:  ${date.format(new Date(), 'ddd, MMM. DD YYYY h:m:s A')} - Developed By: UDSM DHIS2 Team\n`;
+			initialMessage += `DHIS2 Generic Data Exchange Mediator LOGS By Date:  ${date.format(
+				new Date(),
+				'ddd, MMM. DD YYYY h:m:s A'
+			)} - Developed By: UDSM DHIS2 Team\n`;
 			initialMessage += `**********************************************************************************************************\n`;
 			const dataSuccessLogFilePath = path.join(
 				dirName,
 				'private',
 				'log',
-				systemNameId,
+				activeSystem,
 				'success.txt'
 			);
 
+			/***
+			 *
+			 */
 			try {
+				/***
+				 *
+				 */
 				fs.open(dataSuccessLogFilePath, 'a', (err, fd) => {
+					/***
+					 *
+					 */
 					if (err)
 						logger.printLogMessageInConsole(
 							'error',
 							err,
-							systemNameId
+							activeSystem
 						);
-					fs.appendFile(dataSuccessLogFilePath, `${initialMessage}`, err => {
-						if (err)
-							logger.printLogMessageInConsole(
-								'error',
-								err,
-								systemNameId
-							);
-					});
+					fs.appendFile(
+						dataSuccessLogFilePath,
+						`${initialMessage}`,
+						err => {
+							if (err)
+								logger.printLogMessageInConsole(
+									'error',
+									err,
+									activeSystem
+								);
+						}
+					);
 				});
 			} catch (error) {
+				/***
+				 *
+				 */
+
 				this.printLogMessageInConsole(
 					'error',
 					error,
-					systemNameId
+					activeSystem
 				);
 			}
 		}
 	};
 
-	printingTimestampForSpecificLogOnStart = (systemNameId, dirName) => {
+	/***
+	 *
+	 */
+	printingTimestampForSpecificLogOnStart = (activeSystem, dirName) => {
+		/***
+		 *
+		 */
 		const logger = new Logger();
+		/***
+		 *
+		 */
 		let initialMessage = ``;
+		/***
+		 *
+		 */
 		initialMessage += `\r\n\n----------------------------------------------------------------------------------------------------------\n`;
-		initialMessage += `DHIS2 Generic Data Exchange Mediator LOGS By Date:  ${date.format(new Date(), 'ddd, MMM. DD YYYY h:m:s A')} - Developed By: UDSM DHIS2 Team\n`;
+		initialMessage += `DHIS2 Generic Data Exchange Mediator LOGS By Date:  ${date.format(
+			new Date(),
+			'ddd, MMM. DD YYYY h:m:s A'
+		)} - Developed By: UDSM DHIS2 Team\n`;
 		initialMessage += `**********************************************************************************************************\n`;
 
+		/***
+		 *
+		 */
 		const consoleLogsFilePath = path.join(
 			dirName,
 			'logs',
 			'res',
-			systemNameId,
+			activeSystem,
 			'logs.txt'
 		);
 
+		/***
+		 *
+		 */
 		try {
 			fs.open(consoleLogsFilePath, 'a', (err, fd) => {
+				/***
+				 *
+				 */
 				if (err)
 					logger.printLogMessageInConsole(
 						'error',
 						err,
-						systemNameId
+						activeSystem
 					);
-				fs.appendFile(consoleLogsFilePath, `${initialMessage}`, err => {
-					if (err)
-						logger.printLogMessageInConsole(
-							'error',
-							err,
-							systemNameId
-						);
-				});
+				fs.appendFile(
+					consoleLogsFilePath,
+					`${initialMessage}`,
+					err => {
+						if (err)
+							logger.printLogMessageInConsole(
+								'error',
+								err,
+								activeSystem
+							);
+					}
+				);
 			});
 		} catch (error) {
-			this.printLogMessageInConsole(
-				'error',
-				error,
-				systemNameId
-			);
+			/***
+			 *
+			 */
+			this.printLogMessageInConsole('error', error, activeSystem);
 		}
 	};
 }
 
+/***
+ *
+ */
 module.exports = AppInfo;

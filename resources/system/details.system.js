@@ -1,5 +1,5 @@
 /***
- * 
+ *
  */
 const _ = require('lodash');
 const Utilities = require('../../utils/utils');
@@ -8,120 +8,137 @@ const Utilities = require('../../utils/utils');
  *
  */
 class SystemInfo {
-    /**
-           *
-           */
-    constructor() { }
+	/**
+	 *
+	 */
+	constructor() { }
 
-    /***
-       * 
-       */
-    getSystemUID = systemName => {
-        return systemName ? _.head(_.reverse(_.split(systemName, '_', 2))).toString() : '';
-    };
+	/***
+	 *
+	 */
+	getSystemUID = systemName => {
+		return systemName
+			? _.head(_.reverse(_.split(systemName, '_', 2))).toString()
+			: '';
+	};
 
-    /**
-           *
-           */
-    getCurrentRunningSystem = mediatorConfig => {
-        return _.head(
-            _.filter(_.keys(mediatorConfig), config => {
-                return mediatorConfig[config].isAllowed;
-            })
-        );
-    };
+	/**
+	 *
+	 */
+	getActiveSystem = mediatorConfig => {
+		return _.uniq(
+			_.filter(_.keys(mediatorConfig), config => {
+				return mediatorConfig[config].isAllowed;
+			})
+		);
+	};
 
-    /**
-           *
-           */
-    getCurrentRunningReport = (mediatorConfig, systemNameId) => {
-        const utilities = new Utilities();
-        return _.head(
-            _.flattenDeep(
-                _.filter(_.keys(mediatorConfig[systemNameId]), key => {
-                    return utilities.isObject(mediatorConfig[systemNameId][key]);
-                }).filter(Boolean)
-            )
-        );
-    };
+	getRunningSystem = systems => {
+		if (systems) {
+			_.forIn(systems, system => { });
+		}
+	};
 
-    /**
-           * 
-           */
-    isUsingHIMMediatorSystem = (mediatorConfig, systemNameId) => {
-        return mediatorConfig && systemNameId
-            ? mediatorConfig[systemNameId].isUsingHIM
-            : '';
-    };
+	/**
+	 *
+	 */
+	getCurrentRunningBatch = (mediatorConfig, activeSystem, utilInstance) => {
+		return mediatorConfig
+			? _.flattenDeep(
+				_.filter(
+					_.keys(mediatorConfig[activeSystem]),
+					key => {
+						return utilInstance.isObject(
+							mediatorConfig[activeSystem][
+							key
+							]
+						);
+					}
+				).filter(Boolean)
+			)
+			: [];
+	};
 
-    /**
-           * 
-           */
-    getCurrentRunningSystemImportURL = (mediatorConfig, systemNameId) => {
-        return mediatorConfig && systemNameId
-            ? mediatorConfig[systemNameId].importURL
-            : '';
-    };
+	/**
+	 *
+	 */
+	isUsingHIMMediatorSystem = (mediatorConfig, activeSystem) => {
+		return mediatorConfig && activeSystem
+			? mediatorConfig[activeSystem].importURL
+			: '';
+	};
 
-    /**
-           * 
-           */
-    getCurrentRunningSystemCOC = (mediatorConfig, systemNameId) => {
-        return mediatorConfig && systemNameId
-            ? mediatorConfig[systemNameId].defaultCOC
-            : '';
-    };
+	/**
+	 *
+	 */
+	getActiveSystemImportURL = (mediatorConfig, activeSystem) => {
+		return mediatorConfig && activeSystem
+			? mediatorConfig[activeSystem].importURL
+			: '';
+	};
 
-    /**
-           *
-           */
-    getDatasetForCurrentRunningSystem = (mediatorConfig, systemNameId) => {
-        const utilities = new Utilities();
-        if (systemNameId === 'planrep') {
-            return _.head(
-                _.flattenDeep(
-                    _.keys(mediatorConfig[systemNameId]).map(key => {
-                        return utilities.isObject(mediatorConfig[systemNameId][key])
-                            ? _.keys(mediatorConfig[systemNameId][key]).map(subkey => {
-                                return subkey.startsWith('job') &&
-                                    mediatorConfig[systemNameId][key][subkey]['execute']
-                                    ? mediatorConfig[systemNameId][key][subkey].dx.dataSet
-                                    : null;
-                            })
-                            : null;
-                    })
-                ).filter(Boolean)
-            );
-        } else {
-            return systemNameId
-                ? mediatorConfig[systemNameId].generic.genericTable.dx.dataSet
-                : '';
-        }
-    };
+	/**
+	 *
+	 */
+	getCurrentRunningSystemCOC = (mediatorConfig, activeSystem) => {
+		return mediatorConfig && activeSystem
+			? mediatorConfig[activeSystem].defaultCOC
+			: '';
+	};
 
-    /**
-           *
-           */
-    getCurrentRunningTable = (mediatorConfig, systemNameId) => {
-        const utilities = new Utilities();
-        return _.head(
-            _.flattenDeep(
-                _.map(_.keys(mediatorConfig[systemNameId]), key => {
-                    return utilities.isObject(mediatorConfig[systemNameId][key])
-                        ? _.filter(_.keys(mediatorConfig[systemNameId][key]), subKey => {
-                            return (
-                                utilities.isObject(
-                                    mediatorConfig[systemNameId][key][subKey]
-                                ) &&
-                                mediatorConfig[systemNameId][key][subKey] &&
-                                mediatorConfig[systemNameId][key][subKey]['execute']
-                            );
-                        })
-                        : [];
-                }).filter(Boolean)
-            )
-        );
-    };
+	/**
+	 *
+	 */
+	getDataSetUidForCurrentJob = (
+		mediatorConfig,
+		activeSystem,
+		activeBatch,
+		activeJob
+	) => {
+		/***
+		 * 
+		 */
+		return mediatorConfig && activeSystem
+			? mediatorConfig[activeSystem][activeBatch][activeJob].dataSet
+				.id
+			: '';
+	};
+
+	/**
+	 *
+	 */
+	getCurrentRunningJob = (mediatorConfig, activeSystem, utilInstance) => {
+		return _.flattenDeep(
+			_.map(_.keys(mediatorConfig[activeSystem]), key => {
+				return utilInstance.isObject(
+					mediatorConfig[activeSystem][key]
+				)
+					? _.filter(
+						_.keys(
+							mediatorConfig[activeSystem][
+							key
+							]
+						),
+						subKey => {
+							return (
+								utilInstance.isObject(
+									mediatorConfig[
+									activeSystem
+									][key][subKey]
+								) &&
+								mediatorConfig[
+								activeSystem
+								][key][subKey] &&
+								mediatorConfig[
+								activeSystem
+								][key][subKey]['execute']
+							);
+						}
+					)
+					: [];
+			}).filter(Boolean)
+		);
+	};
 }
 
 module.exports = SystemInfo;
