@@ -11,274 +11,317 @@ const Utilities = require('../../../utils/utils');
 const mediatorConfig = require('../../../config/metadata.config');
 
 class DataExchange {
-    constructor() { }
+	constructor() {}
 
-    /**
-     *
-     */
-    importDataToSystem = async (
-        payload,
-        systemImportURL,
-        systemAuth,
-        systemNameId
-    ) => {
-        const logger = new Logger();
-        try {
-            return await axios.post(systemImportURL, payload, systemAuth);
-        } catch (error) {
-            logger.printLogMessageInConsole('error', error, systemNameId);
-        }
-    };
+	/**
+	 *
+	 */
+	performDataMigrationAcrossSystems = async (
+		payload,
+		systemImportURL,
+		systemAuth,
+		activeSystem
+	) => {
+		const logger = new Logger();
+		try {
+			return await axios.post(systemImportURL, payload, systemAuth);
+		} catch (error) {
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
 
-    /**
-             * 
-             */
-    getUniqueAlreadySentURL = (url, urls) => {
-        return _.uniq([...url, ...urls]);
-    };
+	/**
+	 *
+	 */
+	getUniqueAlreadySentURL = (url, urls) => {
+		return _.uniq([...url, ...urls]);
+	};
 
-    /**
-             *
-             */
-    getAlreadySentAPIURLs = (systemNameId, dirName, tableName) => {
-        const logger = new Logger();
-        const utilities = new Utilities();
-        if (tableName) {
-            const apiURLAlreadySentPathFile = utilities.getAlreadySentPayloadFilePath(
-                systemNameId,
-                dirName,
-                tableName
-            );
-            try {
-                return utilities.getAlreadySentPayloadURL(apiURLAlreadySentPathFile);
-            } catch (error) {
-                logger.printLogMessageInConsole('error', error, systemNameId);
-            }
-        } else {
-            const apiURLAlreadySentPathFile = utilities.getAlreadySentPayloadFilePath(
-                systemNameId,
-                dirName,
-                tableName
-            );
-            try {
-                return utilities.getAlreadySentPayloadURL(apiURLAlreadySentPathFile);
-            } catch (error) {
-                logger.printLogMessageInConsole('error', error, systemNameId);
-            }
-        }
-    };
+	/**
+	 *
+	 */
+	getActiveSystemAlreadySentAPIURLs = (
+		activeSystem,
+		activeBatch,
+		activeJob
+	) => {
+		const logger = new Logger();
+		const utilities = new Utilities();
+		if (activeJob) {
+			const apiURLAlreadySentPathFile = utilities.getAlreadySentPayloadFilePath(
+                activeSystem,
+                activeBatch,
+				activeJob
+			);
+			try {
+				return utilities.getAlreadySentPayloadURL(
+					apiURLAlreadySentPathFile
+				);
+			} catch (error) {
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		} else {
+			const apiURLAlreadySentPathFile = utilities.getAlreadySentPayloadFilePath(
+				activeSystem,
+				dirName,
+				activeJob
+			);
+			try {
+				return utilities.getAlreadySentPayloadURL(
+					apiURLAlreadySentPathFile
+				);
+			} catch (error) {
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		}
+	};
 
-    /**
-           * 
-           */
-    migrateData = async (analyticURL, callback) => {
-        const dataValueManagement = new DataValueManagement();
-        const systemInfo = new SystemInfo();
-        const logger = new Logger();
-        const utilities = new Utilities();
-        const SystemPayload = [];
+	/**
+	 *
+	 */
+	migrateData = async (analyticURL, callback) => {
+		const dataValueManagement = new DataValueManagement();
+		const systemInfo = new SystemInfo();
+		const logger = new Logger();
+		const utilities = new Utilities();
+		const SystemPayload = [];
 
-        const systemNameId = await systemInfo.getCurrentRunningSystem(
-            mediatorConfig
-        );
-        const dirName = await process.cwd();
-        const tableName = (await systemInfo.getCurrentRunningTable(
-            mediatorConfig,
-            systemNameId
-        )) !== undefined
-            ? systemInfo.getCurrentRunningTable(mediatorConfig, systemNameId)
-            : null;
+		const activeSystem = await systemInfo.getCurrentRunningSystem(
+			mediatorConfig
+		);
+		const dirName = await process.cwd();
+		const activeJob =
+			(await systemInfo.getCurrentRunningJob(
+				mediatorConfig,
+				activeSystem
+			)) !== undefined
+				? systemInfo.getCurrentRunningJob(
+						mediatorConfig,
+						activeSystem
+				  )
+				: null;
 
-        // console.log('SYSTEM NAME ID::: ' + systemNameId);
-        // console.log('DIRNAME ID::: ' + dirName);
-        // console.log('TABLE NAME ID::: ' + tableName);
+		// console.log('SYSTEM NAME ID::: ' + activeSystem);
+		// console.log('DIRNAME ID::: ' + dirName);
+		// console.log('TABLE NAME ID::: ' + activeJob);
 
-        const successfullyPayloadsFilePath = await utilities.getPayloadsFilePathForSuccessDataExchange(
-            systemNameId,
-            dirName,
-            tableName
-        );
+		const successfullyPayloadsFilePath = await utilities.getPayloadsFilePathForSuccessDataExchange(
+			activeSystem,
+			dirName,
+			activeJob
+		);
 
-        const successfullyURLFilePath = await utilities.getURLFilePathForSuccessDataExchange(
-            systemNameId,
-            dirName,
-            tableName
-        );
+		const successfullyURLFilePath = await utilities.getURLFilePathForSuccessDataExchange(
+			activeSystem,
+			dirName,
+			activeJob
+		);
 
-        const payloadURLComparatorStatus = await utilities.payloadURLComparator(
-            analyticURL,
-            alreadySentAnalyticURL
-        );
+		const payloadURLComparatorStatus = await utilities.payloadURLComparator(
+			analyticURL,
+			alreadySentAnalyticURL
+		);
 
-        console.log('CAINAMIST::: ' + JSON.stringify(payloadURLComparatorStatus));
+		const systemImportURL = await systemInfo.getActiveSystemImportURL(
+			mediatorConfig,
+			activeSystem
+		);
 
-        const systemImportURL = await systemInfo.getCurrentRunningSystemImportURL(
-            mediatorConfig,
-            systemNameId
-        );
+		const isUsingHIM = await systemInfo.isUsingHIMMediatorSystem(
+			mediatorConfig,
+			activeSystem
+		);
 
-        const isUsingHIM = await systemInfo.isUsingHIMMediatorSystem(
-            mediatorConfig,
-            systemNameId
-        );
+		if (payloadURLComparatorStatus) {
+			logger.printLogMessageInConsole(
+				'info',
+				`Data for this URL is already sent to ${activeSystem.toUpperCase()}`,
+				activeSystem
+			);
+		} else {
+			try {
+				if (activeSystem === 'planrep') {
+					const analyticsResults = await analytics.getAnalyticsResults(
+						analyticURL,
+						systemAuth
+					);
+					if ((await analyticsResults.rows.length) > 0) {
+						const dataValueBlueprint = analytics.getDataValuesImportTemplates();
+						dataValueBlueprint.period = await analyticsResults
+							.metaData.dimensions.pe[0];
+						const dxIndex = analytics.getHeaderPropIndex(
+							analyticsResults,
+							'dx'
+						);
+						const coIndex = analytics.getHeaderPropIndex(
+							analyticsResults,
+							'co'
+						);
+						const ouIndex = analytics.getHeaderPropIndex(
+							analyticsResults,
+							'ou'
+						);
+						const valueIndex = analytics.getHeaderPropIndex(
+							analyticsResults,
+							'value'
+						);
 
-        if (payloadURLComparatorStatus) {
-            logger.printLogMessageInConsole(
-                'info',
-                `Data for this URL is already sent to ${systemNameId.toUpperCase()}`,
-                systemNameId
-            );
-        } else {
-            try {
-                if (systemNameId === 'planrep') {
-                    const analyticsResults = await analytics.getAnalyticsResults(
-                        analyticURL,
-                        systemAuth
-                    );
-                    if ((await analyticsResults.rows.length) > 0) {
-                        const dataValuesImportTemplate = analytics.getDataValuesImportTemplates();
-                        dataValuesImportTemplate.period = await analyticsResults.metaData
-                            .dimensions.pe[0];
-                        const indexForDX = analytics.getDataPropertyIndex(
-                            analyticsResults,
-                            'dx'
-                        );
-                        const indexForCO = analytics.getDataPropertyIndex(
-                            analyticsResults,
-                            'co'
-                        );
-                        const indexForOU = analytics.getDataPropertyIndex(
-                            analyticsResults,
-                            'ou'
-                        );
-                        const indexForValue = analytics.getDataPropertyIndex(
-                            analyticsResults,
-                            'value'
-                        );
+						try {
+							analyticsResults.rows.forEach(row => {
+								const orgUnitId = row[ouIndex];
+								dataValueBlueprint.dataValues.push(
+									{
+										orgUnit: MediatorInit.orgUnitPayload
+											? MediatorInit
+													.orgUnitPayload[
+													orgUnitId
+											  ].code
+											: '',
+										dataElement:
+											row[dxIndex],
+										categoryOptionCombo: row[
+											coIndex
+										]
+											? row[coIndex]
+											: systemInfo.getCurrentRunningSystemCOC(
+													mediatorConfig,
+													activeSystem
+											  ),
+										value: parseInt(
+											row[
+												valueIndex
+											]
+										),
+										comment: '',
+										dataSet: systemReceivingDatasetUid,
+									}
+								);
+								SystemPayload.push({
+									orgUnit: MediatorInit.orgUnitPayload
+										? MediatorInit
+												.orgUnitPayload[
+												orgUnitId
+										  ].code
+										: '',
+									dataElement: row[dxIndex],
+									categoryOptionCombo: row[
+										coIndex
+									]
+										? row[coIndex]
+										: systemInfo.getCurrentRunningSystemCOC(
+												mediatorConfig,
+												activeSystem
+										  ),
+									value: parseInt(
+										row[valueIndex]
+									),
+									comment: '',
+									dataSet: systemReceivingDatasetUid,
+								});
+							});
+							logger.printLogMessageInConsole(
+								'info',
+								`Data Loaded From DHIS2 HMIS - Sent To PlanREP::: ${dataValueBlueprint.dataValues.length} Data values`,
+								activeSystem.toString()
+							);
+							const loadedDataSize =
+								dataValueBlueprint.dataValues
+									.length;
+							const results = await this.performDataMigrationAcrossSystems(
+								dataValueBlueprint,
+								systemImportURL,
+								systemAuth,
+								activeSystem
+							);
 
-                        try {
-                            analyticsResults.rows.forEach(row => {
-                                const orgUnitId = row[indexForOU];
-                                dataValuesImportTemplate.dataValues.push({
-                                    orgUnit: MediatorInit.orgUnitPayload
-                                        ? MediatorInit.orgUnitPayload[orgUnitId].code
-                                        : '',
-                                    dataElement: row[indexForDX],
-                                    categoryOptionCombo: row[indexForCO]
-                                        ? row[indexForCO]
-                                        : systemInfo.getCurrentRunningSystemCOC(
-                                            mediatorConfig,
-                                            systemNameId
-                                        ),
-                                    value: parseInt(row[indexForValue]),
-                                    comment: '',
-                                    dataSet: systemReceivingDatasetUid,
-                                });
-                                SystemPayload.push({
-                                    orgUnit: MediatorInit.orgUnitPayload
-                                        ? MediatorInit.orgUnitPayload[orgUnitId].code
-                                        : '',
-                                    dataElement: row[indexForDX],
-                                    categoryOptionCombo: row[indexForCO]
-                                        ? row[indexForCO]
-                                        : systemInfo.getCurrentRunningSystemCOC(
-                                            mediatorConfig,
-                                            systemNameId
-                                        ),
-                                    value: parseInt(row[indexForValue]),
-                                    comment: '',
-                                    dataSet: systemReceivingDatasetUid,
-                                });
-                            });
-                            logger.printLogMessageInConsole(
-                                'info',
-                                `Data Loaded From DHIS2 HMIS - Sent To PlanREP::: ${dataValuesImportTemplate.dataValues.length} Data values`,
-                                systemNameId.toString()
-                            );
-                            const valueLength = dataValuesImportTemplate.dataValues.length;
-                            const results = await this.importDataToSystem(
-                                dataValuesImportTemplate,
-                                systemImportURL,
-                                systemAuth,
-                                systemNameId
-                            );
+							// Walter here is the ending point where next time if you want to resume you are going to
+							// start from here. Cheers.
 
-                            // Walter here is the ending point where next time if you want to resume you are going to
-                            // start from here. Cheers.
+							if (results.data.status == 200) {
+								const alreadySentURLs = await this.getActiveSystemAlreadySentAPIURLs(
+									activeSystem,
+									dirName,
+									activeJob
+								);
+								alreadySentAnalyticURL = await this.getUniqueAlreadySentURL(
+									alreadySentAnalyticURL,
+									alreadySentURLs
+								);
+								systemInfo.getAlreadySentLogInfo(
+									this.globalURL,
+									alreadySentAnalyticURL
+								);
+								const apiURLAlreadySentPathFile = await utilities.getAlreadySentPayloadFilePath(
+									activeSystem,
+									dirName,
+									activeJob
+								);
 
-                            if (results.data.status == 200) {
-                                const alreadySentURLs = await this.getAlreadySentAPIURLs(
-                                    systemNameId,
-                                    dirName,
-                                    tableName
-                                );
-                                alreadySentAnalyticURL = await this.getUniqueAlreadySentURL(
-                                    alreadySentAnalyticURL,
-                                    alreadySentURLs
-                                );
-                                systemInfo.getAlreadySentLogInfo(
-                                    this.globalURL,
-                                    alreadySentAnalyticURL
-                                );
-                                const apiURLAlreadySentPathFile = await utilities.getAlreadySentPayloadFilePath(
-                                    systemNameId,
-                                    dirName,
-                                    tableName
-                                );
+								await utilities.savingAlreadySentURL(
+									apiURLAlreadySentPathFile,
+									analyticURL,
+									activeSystem
+								);
+								await utilities.savingSuccessfullySentDataPayload(
+									successfullyPayloadsFilePath,
+									successfullyURLFilePath,
+									activeSystem,
+									dataValueBlueprint,
+									analyticURL,
+									results
+								);
+							} else {
+								logger.printLogMessageInConsole(
+									'error',
+									`${results.data.Message}`,
+									activeSystem.toString()
+								);
+							}
+						} catch (error) {
+							logger.printLogMessageInConsole(
+								'error',
+								error,
+								activeSystem.toString()
+							);
+						}
+					} else {
+						logger.printLogMessageInConsole(
+							'info',
+							`Data for this URL return empty rows`,
+							activeSystem.toString()
+						);
+						const emptyResURLs = _.uniq(
+							utilities.getURLForEmptyData()
+						);
 
-                                await utilities.savingAlreadySentURL(
-                                    apiURLAlreadySentPathFile,
-                                    analyticURL,
-                                    systemNameId
-                                );
-                                await utilities.savingSuccessfullySentDataPayload(
-                                    successfullyPayloadsFilePath,
-                                    successfullyURLFilePath,
-                                    systemNameId,
-                                    dataValuesImportTemplate,
-                                    analyticURL,
-                                    results
-                                );
-                            } else {
-                                logger.printLogMessageInConsole(
-                                    'error',
-                                    `${results.data.Message}`,
-                                    systemNameId.toString()
-                                );
-                            }
-                        } catch (error) {
-                            logger.printLogMessageInConsole(
-                                'error',
-                                error,
-                                systemNameId.toString()
-                            );
-                        }
-                    } else {
-                        logger.printLogMessageInConsole(
-                            'info',
-                            `Data for this URL return empty rows`,
-                            systemNameId.toString()
-                        );
-                        const emptyResURLs = _.uniq(utilities.getURLForEmptyData());
-
-                        if (!_.includes(emptyResURLs, analyticURL)) {
-                            // ToDO: Save to the file URL with Empty Rows
-                            const apiURLForDataReturningEmptyRows = utilities.getPathForEmptyFetchedData(
-                                dirName,
-                                systemNameId
-                            );
-                            utilities.savingEmptyRowsDataURL(
-                                apiURLForDataReturningEmptyRows,
-                                systemNameId
-                            );
-                        }
-                    }
-                }
-            } catch (e) {
-                callback(e, null);
-            }
-        }
-    };
+						if (
+							!_.includes(emptyResURLs, analyticURL)
+						) {
+							// ToDO: Save to the file URL with Empty Rows
+							const apiURLForDataReturningEmptyRows = utilities.getPathForEmptyFetchedData(
+								dirName,
+								activeSystem
+							);
+							utilities.savingEmptyRowsDataURL(
+								apiURLForDataReturningEmptyRows,
+								activeSystem
+							);
+						}
+					}
+				}
+			} catch (e) {
+				callback(e, null);
+			}
+		}
+	};
 }
 
 module.exports = DataExchange;

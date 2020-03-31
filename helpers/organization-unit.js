@@ -1,179 +1,131 @@
+/***
+ *
+ */
+const chalk = require('chalk');
+
+/***
+ *
+ */
 const axios = require('axios');
 const Authentication = require('../auth/system.auth');
 const AuthConfig = require('../config/auth.config');
 const Logger = require('../logs/logger.log');
+const Utilities = require('../utils/utils');
 
-class OrganizationUnit {
-	constructor() {}
+/***
+ *
+ */
+class OrganizationUnitManager {
+	/***
+	 *
+	 */
+	constructor() { }
 
-	getOrgunits = async (orgType, dataFromURL, isUsingLiveDhis2, system) => {
+	/***
+	 *
+	 */
+	getOrgUnits = async (
+		mediatorConfig,
+		activeSystem,
+		activeBatch,
+		activeJob
+	) => {
 		const logger = new Logger();
-		if (system === 'ards') {
+		if (activeSystem) {
+			const dhis = 'https://dhis.moh.go.tz/';
+			const orgUnitParam =
+				mediatorConfig &&
+					mediatorConfig[activeSystem][activeBatch][activeJob][
+					'isExecuted'
+					] &&
+					mediatorConfig[activeSystem][activeBatch][activeJob].ou
+						.orgUnits.hasUids
+					? mediatorConfig[activeSystem][activeBatch][
+						activeJob
+					].ou.orgUnits.orgUnitUids
+					: mediatorConfig[activeSystem][activeBatch][
+						activeJob
+					].ou.orgUnits.orgUnitLevel;
+			const isUsingLiveDhis2 =
+				mediatorConfig[activeSystem].isUsingLiveDhis2;
+			const dataFromURL = isUsingLiveDhis2
+				? dhis
+				: mediatorConfig[activeSystem].dataFromURL;
+			const orgUnitUsed =
+				mediatorConfig[activeSystem].systemInfo.from;
 			logger.printLogMessageInConsole(
 				'default',
-				'Organization units from ARDS',
-				system
+				`Organization units loaded from ${chalk.green(
+					orgUnitUsed.toUpperCase()
+				)} system`,
+				activeSystem
 			);
-			return await this.getCouncilOrganizationUnits(
+
+			return await this.getOrganizationUnitsByCriteria(
 				dataFromURL,
 				isUsingLiveDhis2,
-				system
+				activeSystem,
+				orgUnitParam
 			);
-		} else if (system === 'nsmis') {
-			logger.printLogMessageInConsole(
-				'default',
-				'Organization units from NSMIS',
-				system
-			);
-			return await this.getCouncilOrganizationUnits(
-				dataFromURL,
-				isUsingLiveDhis2,
-				system
-			);
-		} else if (system === 'hmis') {
-			logger.printLogMessageInConsole(
-				'default',
-				'Organization units from DHIS2 HMIS',
-				system
-			);
-			return await this.getCouncilOrganizationUnits(
-				dataFromURL,
-				isUsingLiveDhis2,
-				system
-			);
-		} else {
-			if (orgType === 'council') {
-				return await this.getCouncilOrganizationUnits(
-					dataFromURL,
-					isUsingLiveDhis2,
-					system
-				);
-			} else if (orgType === 'facilities') {
-				return await this.getFacilitiesOrganizationUnits(
-					dataFromURL,
-					isUsingLiveDhis2,
-					system
-				);
-			} else {
-				logger.printLogMessageInConsole(
-					'default',
-					'No organization unit criterial specified i.e facilities or council'
-				);
-			}
 		}
 	};
 
-	getFacilitiesOrganizationUnits = async (
+	/***
+	 *
+	 */
+	getOrganizationUnitsByCriteria = async (
 		dataFromURL,
 		isUsingLiveDhis2,
-		system
+		activeSystem,
+		orgUnitParam
 	) => {
 		const authenticator = new Authentication();
 		const logger = new Logger();
+		const utilities = new Utilities();
+		let orgunitsURL = ``;
 
-		// Organisation Unit API with Only Public Facilities
-		const orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=level:eq:4&&filter=organisationUnitGroups.name:eq:Public&paging=false`;
-
-		// Organisation Unit API with All Public And Private Facilities
-		// const orgunitsURL = `https://hmisportal.moh.go.tz/dhis/api/organisationUnits.json?fields=id,name,code&filter=level:eq:4&paging=false`;
-		try {
-			if (isUsingLiveDhis2) {
-				const orgUnits = await axios.get(
-					orgunitsURL,
-					authenticator.getHMISDHIS2SuperAuth()
-				);
-				return await orgUnits.data.organisationUnits;
-			} else {
-				const orgUnits = await axios.get(
-					orgunitsURL,
-					authenticator.getSystemAuth()
-				);
-				return await orgUnits.data.organisationUnits;
-			}
-		} catch (error) {
-			logger.printLogMessageInConsole('error', error, system);
+		if (utilities.isArray(orgUnitParam)) {
+			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=id:in:${orgUnitParam}&paging=false`;
+		} else {
+			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=level:eq:${orgUnitParam}&paging=false`;
 		}
-	};
 
-	getCouncilOrganizationUnits = async (
-		dataFromURL,
-		isUsingLiveDhis2,
-		system
-	) => {
-		const authenticator = new Authentication();
-		const logger = new Logger();
-
-		if (system === 'ards') {
+		if (isUsingLiveDhis2) {
+			logger.printLogMessageInConsole(
+				'default',
+				`${chalk.green(
+					chalk.bold(activeSystem.toUpperCase())
+				)} is using the DHIS2 Platform ${chalk.blue(
+					chalk.bold(dataFromURL)
+				)}`,
+				activeSystem
+			);
 			try {
-				const orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name&filter=level:eq:3&paging=false`;
 				const orgUnits = await axios.get(
 					orgunitsURL,
-					authenticator.getARDSSuperAuth()
+					authenticator.getSystemAuth(
+						AuthConfig,
+						activeSystem
+					)
 				);
 				return await orgUnits.data.organisationUnits;
 			} catch (error) {
-				logger.printLogMessageInConsole('error', error, system);
-			}
-		} else if (system === 'nsmis') {
-			try {
-				const orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name&filter=level:eq:3&paging=false`;
-				const orgUnits = await axios.get(
-					orgunitsURL,
-					authenticator.getNSMISSuperAuth()
-				);
-				return await orgUnits.data.organisationUnits;
-			} catch (error) {
-				logger.printLogMessageInConsole('error', error, system);
-			}
-		} else if (system === 'hmis') {
-			if (isUsingLiveDhis2) {
 				logger.printLogMessageInConsole(
-					'default',
-					`IS USING PATH::: ${dataFromURL}`,
-					system
+					'error',
+					error,
+					activeSystem
 				);
-				const orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=level:eq:3&paging=false`;
-				try {
-					const orgUnits = await axios.get(
-						orgunitsURL,
-						authenticator.getHMISDHIS2SuperAuth()
-					);
-					return await orgUnits.data.organisationUnits;
-				} catch (error) {
-					logger.printLogMessageInConsole('error', error, system);
-				}
 			}
 		} else {
-			// Organisation Unit API with Councils
-			const orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=level:eq:3&paging=false`;
-			if (isUsingLiveDhis2) {
-				logger.printLogMessageInConsole(
-					'default',
-					`IS USING PATH::: ${dataFromURL}`,
-					system
-				);
-				try {
-					const orgUnits = await axios.get(
-						orgunitsURL,
-						authenticator.getSystemAuth(AuthConfig, system)
-					);
-					return await orgUnits.data.organisationUnits;
-				} catch (error) {
-					logger.printLogMessageInConsole('error', error, system);
-				}
-			} else {
-				try {
-					const orgUnits = await axios.get(
-						orgunitsURL,
-						authenticator.getHMISPortalSuperAuth()
-					);
-					return await orgUnits.data.organisationUnits;
-				} catch (error) {
-					logger.printLogMessageInConsole('error', error, system);
-				}
-			}
+			logger.printLogMessageInConsole(
+				'default',
+				`${chalk.green(
+					chalk.bold(activeSystem.toUpperCase())
+				)} is using the ADDRESS ${chalk.green(orgunitsURL)}`,
+				system
+			);
 		}
 	};
 }
 
-module.exports = OrganizationUnit;
+module.exports = OrganizationUnitManager;
