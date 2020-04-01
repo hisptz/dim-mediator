@@ -8,7 +8,6 @@ const path = require('path');
 const chalk = require('chalk');
 const _ = require('lodash');
 
-
 /***
  *
  */
@@ -17,7 +16,6 @@ const SystemInfo = require('../system/details.system');
 const Utilities = require('../../utils/utils');
 const mediatorConfig = require('../../config/metadata.config');
 
-
 /***
  *
  */
@@ -25,7 +23,7 @@ class AppInfo {
 	/***
 	 *
 	 */
-	constructor() {}
+	constructor() { }
 
 	/***
 	 *
@@ -133,7 +131,9 @@ class AppInfo {
 			 */
 			logger.printLogMessageInConsole(
 				'info',
-				`Total URLS Generated For Data Exchange::: ${chalk.yellow(chalk.bold(globalUrl.length))}`,
+				`Total URLS Generated For Data Exchange::: ${chalk.yellow(
+					chalk.bold(globalUrl.length)
+				)}`,
 				activeSystem
 			);
 			/***
@@ -149,9 +149,11 @@ class AppInfo {
 					)
 				)} to ${chalk.blue(
 					chalk.bold(activeSystem.toUpperCase())
-				)} ${chalk.yellow(chalk.bold(alreadySentUrl.length + 1))} out of ${
-				chalk.yellow(chalk.bold(globalUrl.length))
-				}`,
+				)} ${chalk.yellow(
+					chalk.bold(alreadySentUrl.length + 1)
+				)} out of ${chalk.yellow(
+					chalk.bold(globalUrl.length)
+				)}`,
 				activeSystem
 			);
 			/***
@@ -168,6 +170,243 @@ class AppInfo {
 			 */
 			logger.printLogMessageInConsole('error', error, activeSystem);
 		}
+	};
+
+	/***
+	 *
+	 */
+	getDefaultInfo = async (responseMessage, activeSystem) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`------------------------------------------------------------------------------`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`${chalk.green(responseMessage.description)}`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`${chalk.green(
+				responseMessage.responseType
+			)}: Imported: ${chalk.green(
+				chalk.bold(responseMessage.importCount.imported)
+			)} - Updated: ${chalk.green(
+				chalk.bold(responseMessage.importCount.updated)
+			)} - Ignored: ${chalk.yellow(
+				chalk.bold(responseMessage.importCount.ignored)
+			)} - Deleted: ${chalk.red(
+				chalk.bold(responseMessage.importCount.deleted)
+			)}`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		if (_.has(responseMessage, 'conflicts')) {
+			/***
+			 *
+			 */
+			for (const conflict of await responseMessage.conflicts) {
+				/***
+				 *
+				 */
+				logger.printLogMessageInConsole(
+					'info',
+					`Object: ${
+					_.has(conflict, 'object')
+						? chalk.bold(conflict.object)
+						: null
+					} - Reason: ${
+					_.has(conflict, 'value')
+						? chalk.red(conflict.value)
+						: null
+					}`,
+					activeSystem
+				);
+			}
+		}
+
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`------------------------------------------------------------------------------`,
+			activeSystem
+		);
+	};
+
+	/***
+	 *
+	 */
+	getSuccessInfo = async (responseMessage, activeSystem) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`------------------------------------------------------------------------------`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`${chalk.green(responseMessage.description)}`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`${chalk.green(
+				responseMessage.responseType
+			)}: Imported: ${chalk.green(
+				chalk.bold(responseMessage.importCount.imported)
+			)} - Updated: ${chalk.green(
+				chalk.bold(responseMessage.importCount.updated)
+			)} - Ignored: ${chalk.yellow(
+				chalk.bold(responseMessage.importCount.ignored)
+			)} - Deleted: ${chalk.red(
+				chalk.bold(responseMessage.importCount.deleted)
+			)}`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		if (_.has(responseMessage, 'conflicts')) {
+			/***
+			 *
+			 */
+			for (const conflict of await responseMessage.conflicts) {
+				/***
+				 *
+				 */
+				logger.printLogMessageInConsole(
+					'info',
+					`Object: ${
+					_.has(conflict, 'object')
+						? chalk.bold(conflict.object)
+						: null
+					} - Reason: ${
+					_.has(conflict, 'value')
+						? chalk.red(conflict.value)
+						: null
+					}`,
+					activeSystem
+				);
+			}
+		}
+
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`------------------------------------------------------------------------------`,
+			activeSystem
+		);
+	};
+
+	/***
+	 *
+	 */
+	getWarningInfo = async (responseMessage, activeSystem) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`------------------------------------------------------------------------------\n`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`${chalk.green(responseMessage.description)}`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`${chalk.green(
+				responseMessage.responseType
+			)}: Imported: ${chalk.green(
+				chalk.bold(responseMessage.importCount.imported)
+			)} - Updated: ${chalk.green(
+				chalk.bold(responseMessage.importCount.updated)
+			)} - Ignored: ${chalk.yellow(
+				chalk.bold(responseMessage.importCount.ignored)
+			)} - Deleted: ${chalk.red(
+				chalk.bold(responseMessage.importCount.deleted)
+			)}`,
+			activeSystem
+		);
+		/***
+		 *
+		 */
+		if (_.has(responseMessage, 'conflicts')) {
+			/***
+			 *
+			 */
+			for (const conflict of await responseMessage.conflicts) {
+				/***
+				 *
+				 */
+				logger.printLogMessageInConsole(
+					'info',
+					`Object: ${
+					_.has(conflict, 'object')
+						? chalk.bold(conflict.object)
+						: null
+					} - Reason: ${
+					_.has(conflict, 'value')
+						? chalk.red(conflict.value)
+						: null
+					}`,
+					activeSystem
+				);
+			}
+		}
+
+		/***
+		 *
+		 */
+		logger.printLogMessageInConsole(
+			'info',
+			`------------------------------------------------------------------------------\n`,
+			activeSystem
+		);
 	};
 
 	/***
