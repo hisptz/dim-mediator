@@ -20,7 +20,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	constructor() {}
+	constructor() { }
 
 	/**
 	 *
@@ -63,6 +63,16 @@ class Utilities {
 					: '';
 			})
 		);
+	};
+
+	/***
+	 *
+	 */
+	getDataValue = (dataRows, valueIndex) => {
+		/***
+		 *
+		 */
+		return dataRows && valueIndex ? dataRows[valueIndex] : '';
 	};
 
 	/***
@@ -325,15 +335,15 @@ class Utilities {
 		activeJob
 	) => {
 		/***
-		 * 
+		 *
 		 */
 		const logger = new Logger();
 		/***
-		 * 
+		 *
 		 */
 		try {
 			/***
-			 * 
+			 *
 			 */
 			return path.join(
 				dirName,
@@ -342,11 +352,11 @@ class Utilities {
 				activeBatch,
 				activeJob,
 				date.format(new Date(), 'ddd-YYYY-MM-DD:hh:mm:ss-A') +
-					'.json'
+				'.json'
 			);
 		} catch (error) {
 			/***
-			 * 
+			 *
 			 */
 			logger.printLogMessageInConsole('error', error, activeSystem);
 		}
@@ -393,10 +403,10 @@ class Utilities {
 		 */
 		return this.isPathExist(urlPath)
 			? fs
-					.readFileSync(urlPath)
-					.toString()
-					.split('\n')
-					.filter(Boolean)
+				.readFileSync(urlPath)
+				.toString()
+				.split('\n')
+				.filter(Boolean)
 			: [];
 	};
 
@@ -423,10 +433,10 @@ class Utilities {
 		 */
 		return (await urlPath)
 			? await fs
-					.readFileSync(urlPath)
-					.toString()
-					.split('\r\n')
-					.filter(Boolean)
+				.readFileSync(urlPath)
+				.toString()
+				.split('\r\n')
+				.filter(Boolean)
 			: '';
 	};
 
@@ -582,26 +592,26 @@ class Utilities {
 		const nanga = _.filter(activeSystems, activeSystem => {
 			return activeSystem
 				? _.filter(
-						systemInfo.getCurrentRunningJob(
-							mediatorConfig,
-							activeSystem,
-							utilities
-						),
-						async job => {
-							return job
-								? (await utilities.getScheduledJobURLs(
-										await utilities.getFilePathForBatches(
-											activeSystem,
-											process.cwd(),
-											job
-										),
-										job
-								  )) > 0
-									? activeSystem
-									: ''
-								: [];
-						}
-				  )
+					systemInfo.getCurrentRunningJob(
+						mediatorConfig,
+						activeSystem,
+						utilities
+					),
+					async job => {
+						return job
+							? (await utilities.getScheduledJobURLs(
+								await utilities.getFilePathForBatches(
+									activeSystem,
+									process.cwd(),
+									job
+								),
+								job
+							)) > 0
+								? activeSystem
+								: ''
+							: [];
+					}
+				)
 				: [];
 		});
 	};
@@ -615,10 +625,10 @@ class Utilities {
 			try {
 				return watcherPath
 					? fs
-							.readFileSync(watcherPath)
-							.toString()
-							.split('\n')
-							.filter(Boolean)
+						.readFileSync(watcherPath)
+						.toString()
+						.split('\n')
+						.filter(Boolean)
 					: [];
 			} catch (error) {
 				logger.printLogMessageInConsole(
@@ -634,10 +644,10 @@ class Utilities {
 			try {
 				return creatResponse
 					? await fs
-							.readFileSync(watcherPath)
-							.toString()
-							.split('\n')
-							.filter(Boolean)
+						.readFileSync(watcherPath)
+						.toString()
+						.split('\n')
+						.filter(Boolean)
 					: [];
 			} catch (error) {
 				logger.printLogMessageInConsole(
@@ -937,9 +947,14 @@ class Utilities {
 	/**
 	 *
 	 */
-	getPathForEmptyFetchedData = (dirName, activeSystem, activeBatch, activeJob) => {
+	getPathForEmptyFetchedData = (
+		dirName,
+		activeSystem,
+		activeBatch,
+		activeJob
+	) => {
 		/***
-		 * 
+		 *
 		 */
 		return path.join(
 			dirName,
@@ -955,17 +970,21 @@ class Utilities {
 	/**
 	 *
 	 */
-	savingEmptyRowsDataURL = (emptyRowsURLPath, activeSystem, analyticURL) => {
+	savingEmptyRowsDataURL = (
+		emptyRowsURLPath,
+		activeSystem,
+		analyticURL
+	) => {
 		/***
-		 * 
+		 *
 		 */
 		const logger = new Logger();
 		/***
-		 * 
+		 *
 		 */
 		try {
 			/***
-			 * 
+			 *
 			 */
 			fs.open(emptyRowsURLPath, 'a', (err, fd) => {
 				if (err)
@@ -989,7 +1008,7 @@ class Utilities {
 					);
 				} catch (error) {
 					/***
-					 * 
+					 *
 					 */
 					logger.printLogMessageInConsole(
 						'error',
@@ -1000,7 +1019,7 @@ class Utilities {
 			});
 		} catch (error) {
 			/***
-			 * 
+			 *
 			 */
 			logger.printLogMessageInConsole('error', error, activeSystem);
 		}
@@ -1062,17 +1081,28 @@ class Utilities {
 							dataValueBlueprint
 						);
 						logger.printLogMessageInConsole(
-							'error',
-							`Response Message: ${chalk.red(
+							'info',
+							`Response Message: ${chalk.gray(
 								chalk.bold(
-									dataMigrationResponse
-										.data
-										.Message
+									_.has(
+										dataMigrationResponse.data,
+										'Message'
+									)
+										? dataMigrationResponse
+											.data
+											.Message
+										: _.has(
+											dataMigrationResponse.data,
+											'description'
+										)
+											? dataMigrationResponse
+												.data
+												.description
+											: ''
 								)
-							)} Error Code: ${chalk.yellow(
+							)} Code: ${chalk.yellow(
 								chalk.bold(
-									dataMigrationResponse
-										.data
+									dataMigrationResponse.data
 										.status
 								)
 							)}`,
@@ -1186,7 +1216,7 @@ class Utilities {
 					fs.appendFile(
 						logsPathFile,
 						`Total Number Of Data Remained To Be Sent::: ${globalURL.length -
-							alreadySentURL.length}\r\n`,
+						alreadySentURL.length}\r\n`,
 						err => {
 							if (err)
 								logger.printLogMessageInConsole(

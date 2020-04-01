@@ -47,7 +47,7 @@ class MediatorInit {
 	/***
 	 *
 	 */
-	constructor() {}
+	constructor() { }
 
 	/***
 	 *
@@ -59,14 +59,14 @@ class MediatorInit {
 	};
 
 	/***
-	 * 
+	 *
 	 */
 	static executeTest = () => {
 		/***
-		 * 
+		 *
 		 */
 		return true;
-	}
+	};
 
 	/***
 	 *
@@ -149,7 +149,7 @@ class MediatorInit {
 							(await activeJob.startsWith('job')) &&
 							(await utilities.isObject(
 								mediatorConfig[activeSystem][
-									activeBatch
+								activeBatch
 								][activeJob]
 							))
 						) {
@@ -239,7 +239,7 @@ class MediatorInit {
 			 *
 			 */
 			if ((await batches) !== undefined) {
-				if ((await batches.length) > 0) {
+				if ((await batches.length) >= 0) {
 					MediatorInit.currentRunningSystem = await activeSystem;
 					MediatorInit.getCurrentRunningJob = await activeJob;
 					const sid = activeSystem;
@@ -370,21 +370,22 @@ class MediatorInit {
 					/***
 					 *
 					 */
-					logger.printLogMessageInConsole(
-						'success',
-						`${chalk.green(
-							chalk.bold('DONE')
-						)} Batch(${mediatorConfig[activeSystem][
-							activeBatch
-						][
-							'batchName'
-						].toUpperCase()}) and JOB(${mediatorConfig[
-							activeSystem
-						][activeBatch][
-							activeJob
-						].toUpperCase()}) for system ${activeSystem.toUpperCase()} has finished`,
-						activeSystem
-					);
+					// logger.printLogMessageInConsole(
+					// 	'success',
+					// 	`${chalk.green(
+					// 		chalk.bold('DONE')
+					// 	)} Batch(${mediatorConfig[activeSystem][
+					// 		activeBatch
+					// 	][
+					// 		'batchName'
+					// 	].toUpperCase()}) and JOB(${mediatorConfig[
+					// 		activeSystem
+					// 	][activeBatch][
+					// 		activeJob
+					// 	].toUpperCase()}) for system ${activeSystem.toUpperCase()} has finished`,
+					// 	activeSystem
+					// );
+
 					logger.printLogMessageInConsole(
 						'default',
 						`\n`,
@@ -442,14 +443,14 @@ class MediatorInit {
 				logger.printLogMessageInConsole(
 					'error',
 					`There is no Data Import URL for the system ${activeSystem.toUpperCase()}`,
-					activeSystem.toString()
+					activeSystem
 				);
 			}
 		} else {
 			logger.printLogMessageInConsole(
 				'error',
 				`There is no URL to fetch data for system ${activeSystem.toUpperCase()}`,
-				activeSystem.toString()
+				activeSystem
 			);
 		}
 	};
@@ -538,7 +539,6 @@ class MediatorInit {
 							activeSystem
 						)
 					);
-
 					if ((await analyticsResults.rows.length) > 0) {
 						// const dataValueBlueprint = await dataValueManagement.getDataValuesImportTemplates();
 						const dataValueBlueprint = await {
@@ -612,6 +612,10 @@ class MediatorInit {
 											coSpecialIndex,
 											analyticsResult
 										),
+										value: await utilities.getDataValue(
+											analyticsResult,
+											valueIndex
+										),
 										comment: '',
 										dataSet: await systemInfo.getDataSetUidForCurrentJob(
 											mediatorConfig,
@@ -642,7 +646,7 @@ class MediatorInit {
 											.length
 									)
 								)} Data values`,
-								activeSystem.toString()
+								activeSystem
 							);
 
 							const loadedDataSize = await dataValueBlueprint
@@ -651,6 +655,7 @@ class MediatorInit {
 								AuthConfig,
 								activeSystem
 							);
+
 							const dataMigrationResponse = await dataExchange.performDataMigrationAcrossSystems(
 								dataValueBlueprint,
 								systemImportURL,
@@ -712,14 +717,26 @@ class MediatorInit {
 									);
 								} else {
 									logger.printLogMessageInConsole(
-										'error',
-										`Response Message: ${chalk.red(
+										'info',
+										`Response Message: ${chalk.gray(
 											chalk.bold(
-												dataMigrationResponse
-													.data
-													.Message
+												_.has(
+													dataMigrationResponse.data,
+													'Message'
+												)
+													? dataMigrationResponse
+														.data
+														.Message
+													: _.has(
+														dataMigrationResponse.data,
+														'description'
+													)
+														? dataMigrationResponse
+															.data
+															.description
+														: ''
 											)
-										)} Error Code: ${chalk.yellow(
+										)} Code: ${chalk.yellow(
 											chalk.bold(
 												dataMigrationResponse
 													.data
@@ -730,20 +747,108 @@ class MediatorInit {
 									);
 								}
 							} else {
-								// ToDO: Implement data exchange not through HIM
+								/***
+								 *
+								 */
+								if (
+									dataMigrationResponse.data &&
+									dataMigrationResponse.data
+								) {
+									/***
+									 *
+									 */
+									const responseMessage = await dataMigrationResponse.data;
+									/***
+									 *
+									 */
+									if (
+										responseMessage.status ===
+										'WARNING'
+									) {
+										/***
+										 *
+										 */
+										await appInfo.getWarningInfo(
+											responseMessage,
+											activeSystem
+										);
+									} else if (
+										responseMessage.status ===
+										'SUCCESS'
+									) {
+										const alreadySentURLs = await dataExchange.getActiveSystemAlreadySentAPIURLs(
+											activeSystem,
+											activeBatch,
+											activeJob
+										);
+
+										const alreadySentAnalyticURL = await dataExchange.getUniqueAlreadySentURL(
+											MediatorInit.alreadySentURLGlobal,
+											alreadySentURLs
+										);
+
+										const URLToBeSent = await utilities.getAllURLForDataToBeSent(
+											__dirname,
+											activeSystem,
+											activeBatch,
+											activeJob
+										);
+
+										await appInfo.getAlreadySentLogInfo(
+											URLToBeSent,
+											alreadySentAnalyticURL,
+											activeSystem
+										);
+										const apiURLAlreadySentPathFile = await utilities.getAlreadySentPayloadFilePath(
+											activeSystem,
+											activeBatch,
+											activeJob
+										);
+
+										await utilities.savingAlreadySentURL(
+											apiURLAlreadySentPathFile,
+											analyticURL,
+											activeSystem
+										);
+										await utilities.savingSuccessfullySentDataPayload(
+											successfullyPayloadsFilePath,
+											successfullyURLFilePath,
+											activeSystem,
+											dataValueBlueprint,
+											analyticURL,
+											dataMigrationResponse,
+											loadedDataSize
+										);
+										/***
+										 *
+										 */
+										await appInfo.getSuccessInfo(
+											responseMessage,
+											activeSystem
+										);
+									} else {
+										/***
+										 *
+										 */
+										await appInfo.getDefaultInfo(
+											responseMessage,
+											activeSystem
+										);
+									}
+								}
 							}
 						} catch (error) {
 							logger.printLogMessageInConsole(
 								'error',
 								error,
-								activeSystem.toString()
+								activeSystem
 							);
 						}
 					} else {
 						logger.printLogMessageInConsole(
 							'info',
 							`Data for this URL return empty rows`,
-							activeSystem.toString()
+							activeSystem
 						);
 						const emptyResURLs = await _.uniq(
 							utilities.getURLForEmptyData(

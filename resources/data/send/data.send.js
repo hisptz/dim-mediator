@@ -11,7 +11,7 @@ const Utilities = require('../../../utils/utils');
 const mediatorConfig = require('../../../config/metadata.config');
 
 class DataExchange {
-	constructor() {}
+	constructor() { }
 
 	/**
 	 *
@@ -49,8 +49,8 @@ class DataExchange {
 		const utilities = new Utilities();
 		if (activeJob) {
 			const apiURLAlreadySentPathFile = utilities.getAlreadySentPayloadFilePath(
-                activeSystem,
-                activeBatch,
+				activeSystem,
+				activeBatch,
 				activeJob
 			);
 			try {
@@ -104,14 +104,10 @@ class DataExchange {
 				activeSystem
 			)) !== undefined
 				? systemInfo.getCurrentRunningJob(
-						mediatorConfig,
-						activeSystem
-				  )
+					mediatorConfig,
+					activeSystem
+				)
 				: null;
-
-		// console.log('SYSTEM NAME ID::: ' + activeSystem);
-		// console.log('DIRNAME ID::: ' + dirName);
-		// console.log('TABLE NAME ID::: ' + activeJob);
 
 		const successfullyPayloadsFilePath = await utilities.getPayloadsFilePathForSuccessDataExchange(
 			activeSystem,
@@ -181,9 +177,9 @@ class DataExchange {
 									{
 										orgUnit: MediatorInit.orgUnitPayload
 											? MediatorInit
-													.orgUnitPayload[
-													orgUnitId
-											  ].code
+												.orgUnitPayload[
+												orgUnitId
+											].code
 											: '',
 										dataElement:
 											row[dxIndex],
@@ -192,12 +188,12 @@ class DataExchange {
 										]
 											? row[coIndex]
 											: systemInfo.getCurrentRunningSystemCOC(
-													mediatorConfig,
-													activeSystem
-											  ),
+												mediatorConfig,
+												activeSystem
+											),
 										value: parseInt(
 											row[
-												valueIndex
+											valueIndex
 											]
 										),
 										comment: '',
@@ -207,9 +203,9 @@ class DataExchange {
 								SystemPayload.push({
 									orgUnit: MediatorInit.orgUnitPayload
 										? MediatorInit
-												.orgUnitPayload[
-												orgUnitId
-										  ].code
+											.orgUnitPayload[
+											orgUnitId
+										].code
 										: '',
 									dataElement: row[dxIndex],
 									categoryOptionCombo: row[
@@ -217,9 +213,9 @@ class DataExchange {
 									]
 										? row[coIndex]
 										: systemInfo.getCurrentRunningSystemCOC(
-												mediatorConfig,
-												activeSystem
-										  ),
+											mediatorConfig,
+											activeSystem
+										),
 									value: parseInt(
 										row[valueIndex]
 									),
