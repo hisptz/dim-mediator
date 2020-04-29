@@ -16,7 +16,9 @@ System integration is an engineering process of bringing together the components
 
 [DHIS2](https://www.dhis2.org/) Interoperability Mediator(DIM Mediator) is intended to be used as the engine to initiate integration of the [DHIS2](https://www.dhis2.org/) systems as well as other systems that are built with capacity to offer API services.
 
-![DHIS2 Interoperability Mediator](https://lh3.googleusercontent.com/19ozb9AbSDd48cFAc7aut9yq2bKRc95LytORzUfaoWeDYyKrjKZI2Py_CN0UjHI3hX3UQQWmkyyLamrC9wQS4kU4qsbwwNk30_CbHCh2ZogfAxl7H2bvb59361hGAjvHtAp8muVZgG7JtCc7rDW0621LYp1A_sYO1YC6XrgH927XNUkbUzKW9xOSEYigjXMoB8ydMpqI4LQg14CBQB-dAsKrbDAOoI97E67L5mCPsVGXN_RED9MIwI60i_wzFZJ-MvuSzUARa9pZAlLgOMTt_4w6JmKSkKT6CqlUUf64ZnwkW75X11FXGahbfRgmFeFdZJyJmeCHOhAl8O1owKTe0efZNePJVR3aUMm7d_-k_QG9XvKUrDMCC2_neN_-gtrgVsUeDZo4x2_M-14K20t_acCKmVpsby0fRmEtd0CKNl5FHF0lvmtYwY1LG4zwwK760EJxZUIw6-xaRfSroyXUu2AOcJNY2lr9wttPpC4378w1fP97pjvKYKi6__bQ6M9EUFLoAP5mcsfRlX6PWRAKNs8Ilf4bHD3q6ngLLNi-Ak2l9Xw7sG39HIxxbpFGTi9GHzFitYFkww6lRWxZdhvfrF5XcDmlfwXotc6Kzw2qmYBC_d207BY2dOsWC3xgRTjsc3uIqoj6XCVxlYPYXF2olVV1mmJm_6KUarBFaVMsETA2SPViIFI6a4SKVYdGTm9BFYaQ=w1853-h669-ft)
+![DHIS2 Interoperability Mediator](assets/dim_mediator_1.png)
+
+![DHIS2 Integration Mediator](assets/dim_mediator_2.png)
 
 ## About The Project
 
