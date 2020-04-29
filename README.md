@@ -14,11 +14,12 @@
 ## Introduction
 System integration is an engineering process of bringing together the components(i.e subsystems) into one system(an aggregation of subsystems cooperating so that the system is able to deliver the overarching functionality) and ensuring that the subsystems function together as a system. In Computer Science we term it as linking together different computing systems and software applications physically and functionally to act as a coordinated whole. System integration it involves integrating existing systems in a such a way it increase value to the customers, improve product quality and performance while at the same time providing value to the company. In a modern world connected by Internet, more and more systems are designed to connect, both within the system under construction and to the system that are already deployed.
 
+![DHIS2 Integration Mediator](assets/dim_mediator_2.png)
+
+
 [DHIS2](https://www.dhis2.org/) Interoperability Mediator(DIM Mediator) is intended to be used as the engine to initiate integration of the [DHIS2](https://www.dhis2.org/) systems as well as other systems that are built with capacity to offer API services.
 
 ![DHIS2 Interoperability Mediator](assets/dim_mediator_1.png)
-
-![DHIS2 Integration Mediator](assets/dim_mediator_2.png)
 
 ## About The Project
 
