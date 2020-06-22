@@ -21,7 +21,7 @@ class MediatorService {
 	/**
 	 *
 	 */
-	constructor() { }
+	constructor() {}
 
 	/***
 	 *
@@ -44,16 +44,37 @@ class MediatorService {
 		const api = await `api/analytics.json`;
 		const dataDime = await `dimension=dx:${
 			dx.id
-			}&${await utilities.joinBySymbol(
-				await this.getFormattedAnalyticsDXUrl(dx, activeSystem),
-				'&'
-			)}`;
+		}&${await this.getFormattedDimensionCOForDataElement(
+			dx,
+			activeSystem
+		)}`;
 		const periodDime = await `filter=pe:${pe}`;
 		const orgunitDime = `dimension=ou:${ou}`;
 		const props = await `displayProperty=NAME&skipMeta=false`;
 		const APIUrl = await `${hostname}${api}?${dataDime}&${periodDime}&${orgunitDime}&${props}`;
 		return APIUrl;
 	}
+
+	getFormattedDimensionCOForDataElement = async (dx, activeSystem) => {
+		const logger = new Logger();
+		const dimensionMetadata = await this.getFormattedAnalyticsDXUrl(
+			dx,
+			activeSystem
+		);
+		if (dx && activeSystem) {
+			if (dimensionMetadata === 'dimension=co') {
+				return dimensionMetadata;
+			} else {
+				await utilities.joinBySymbol(dimensionMetadata, '&');
+			}
+		} else {
+			logger.printLogMessageInConsole(
+				'error',
+				`No active system or data found`,
+				activeSystem
+			);
+		}
+	};
 
 	/***
 	 *
@@ -68,17 +89,17 @@ class MediatorService {
 		 *
 		 */
 		return _.has(dx, 'dimensions') && dx.dimensions.length > 0
-			? _.map(dx.dimensions, category => {
-				return `dimension=${
-					category.id
+			? _.map(dx.dimensions, (category) => {
+					return `dimension=${
+						category.id
 					}:${utilities.joinBySymbol(
 						category.options,
 						';'
 					)}`;
-			})
+			  })
 			: dx.type === 'dataElement'
-				? `dimension=co`
-				: [];
+			? `dimension=co`
+			: [];
 	};
 
 	/**
@@ -112,13 +133,13 @@ class MediatorService {
 	/**
 	 *
 	 */
-	getData = async url => {
+	getData = async (url) => {
 		const logger = new Logger();
 		const authenticator = new Authenticate();
 		try {
 			return await axios
 				.get(url, authenticator.getHMISPortalSuperAuth())
-				.catch(error =>
+				.catch((error) =>
 					logger.printLogMessageInConsole('error', error)
 				);
 		} catch (error) {
