@@ -85,7 +85,7 @@ class OrganizationUnitManager {
 		let orgunitsURL = ``;
 
 		if (utilities.isArray(orgUnitParam)) {
-			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=id:in:${orgUnitParam}&paging=false`;
+			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=id:in:[${orgUnitParam}]&paging=false`;
 		} else {
 			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=level:eq:${orgUnitParam}&paging=false`;
 		}
