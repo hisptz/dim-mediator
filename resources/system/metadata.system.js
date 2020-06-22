@@ -17,115 +17,119 @@ const Logger = require('../../logs/logger.log');
  *
  */
 class MetadataManager {
-    /***
-     *
-     */
-    constructor() {}
+	/***
+	 *
+	 */
+    constructor() { }
 
-    /***
-     *
-     */
+	/***
+	 *
+	 */
     getActiveSystemPeriodDimension = async (
         activeSystem,
         activeBatch,
         activeJob
     ) => {
-        /***
-         *
-         */
+		/***
+		 *
+		 */
         if (!activeBatch) {
-            /***
-             *
-             */
+			/***
+			 *
+			 */
             return await _.flatten(
                 _.map(
                     mediatorConfig[activeSystem][activeBatch][
                         activeJob
                     ].pe.periods,
-                    period => {
+                    (period) => {
                         return mediatorConfig[activeSystem][
-                                activeBatch
-                            ][activeJob].pe.subPeriods.length > 0 ?
-                            _.map(
+                            activeBatch
+                        ][activeJob].pe.subPeriods.length > 0
+                            ? _.map(
                                 mediatorConfig[
                                     activeSystem
                                 ][activeBatch][activeJob]
-                                .pe.subPeriods,
-                                subPeriod => {
+                                    .pe.subPeriods,
+                                (subPeriod) => {
                                     return (
                                         period +
                                         subPeriod
                                     );
                                 }
-                            ) :
-                            period;
+                            )
+                            : _.has(period, 'id')
+                                ? period.id
+                                : period;
                     }
                 )
             );
         } else {
-            /***
-             *
-             */
+			/***
+			 *
+			 */
             return await _.flatten(
                 _.map(
                     mediatorConfig[activeSystem][activeBatch][
                         activeJob
                     ].pe.periods,
-                    period => {
+                    (period) => {
                         return mediatorConfig[activeSystem][
-                                activeBatch
-                            ][activeJob].pe.subPeriods.length > 0 ?
-                            _.map(
+                            activeBatch
+                        ][activeJob].pe.subPeriods.length > 0
+                            ? _.map(
                                 mediatorConfig[
                                     activeSystem
                                 ][activeBatch][activeJob]
-                                .pe.subPeriods,
-                                subPeriod => {
+                                    .pe.subPeriods,
+                                (subPeriod) => {
                                     return (
                                         period +
                                         subPeriod
                                     );
                                 }
-                            ) :
-                            period;
+                            )
+                            : _.has(period, 'id')
+                                ? period.id
+                                : period;
                     }
                 )
             );
         }
     };
 
-    /***
-     *
-     */
+	/***
+	 *
+	 */
     getActiveSystemDataDimension = (activeSystem, activeBatch, activeJob) => {
-        /***
-         *
-         */
+		/***
+		 *
+		 */
         if (activeBatch) {
-            /***
-             *
-             */
+			/***
+			 *
+			 */
             return _.chunk(
                 _.map(
                     mediatorConfig[activeSystem][activeBatch][
                         activeJob
                     ].dx.data,
-                    data => {
+                    (data) => {
                         return data;
                     }
                 ),
                 50
             );
         } else {
-            /***
-             *
-             */
+			/***
+			 *
+			 */
             return _.chunk(
                 _.map(
                     mediatorConfig[activeSystem][activeBatch][
                         activeJob
                     ].dx.data,
-                    data => {
+                    (data) => {
                         return data;
                     }
                 ),
@@ -133,11 +137,10 @@ class MetadataManager {
             );
         }
     };
-    
 
-    /***
-     *
-     */
+	/***
+	 *
+	 */
     prepareAnalyticsURLForDataFetch = async (
         activeSystem,
         activeBatch,
@@ -147,16 +150,16 @@ class MetadataManager {
         periods,
         apiFromURL
     ) => {
-        /***
-         *
-         */
+		/***
+		 *
+		 */
         const mediatorService = new MediatorService();
         const utilities = new Utilities();
         const logger = new Logger();
         let apiURLPathFile = '';
-        /***
-         *
-         */
+		/***
+		 *
+		 */
         if (activeJob) {
             apiURLPathFile = path.join(
                 process.cwd(),
@@ -168,9 +171,9 @@ class MetadataManager {
                 'fetch.txt'
             );
         } else {
-            /***
-             *
-             */
+			/***
+			 *
+			 */
             apiURLPathFile = path.join(
                 __dirname,
                 'private',
@@ -180,33 +183,33 @@ class MetadataManager {
             );
         }
 
-        /***
-         *
-         */
+		/***
+		 *
+		 */
         if ((await activeSystem) && (await orgUnits) && (await periods)) {
-            /***
-             *
-             */
+			/***
+			 *
+			 */
             for (const period of await periods) {
-                /***
-                 *
-                 */
+				/***
+				 *
+				 */
                 for (const orgUnit of await orgUnits) {
                     const formattedOU = utilities.joinBySymbol(
                         orgUnit,
                         ';'
                     );
-                    /***
-                     *
-                     */
+					/***
+					 *
+					 */
                     for (const elements of await data) {
-                        /***
-                         *
-                         */
+						/***
+						 *
+						 */
                         for (const dxProps of await elements) {
-                            /***
-                             *
-                             */
+							/***
+							 *
+							 */
                             const formattedURL = await mediatorService.generateAnalyticsURL(
                                 activeSystem,
                                 apiFromURL,
@@ -215,9 +218,9 @@ class MetadataManager {
                                 dxProps
                             );
 
-                            /***
-                             *
-                             */
+							/***
+							 *
+							 */
                             try {
                                 fs.open(
                                     apiURLPathFile,
@@ -233,7 +236,9 @@ class MetadataManager {
                                             fs.appendFile(
                                                 apiURLPathFile,
                                                 `${formattedURL}\r\n`,
-                                                err => {
+                                                (
+                                                    err
+                                                ) => {
                                                     if (
                                                         err
                                                     )

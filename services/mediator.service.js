@@ -21,7 +21,7 @@ class MediatorService {
 	/**
 	 *
 	 */
-	constructor() {}
+	constructor() { }
 
 	/***
 	 *
@@ -44,10 +44,10 @@ class MediatorService {
 		const api = await `api/analytics.json`;
 		const dataDime = await `dimension=dx:${
 			dx.id
-		}&${await this.getFormattedDimensionCOForDataElement(
-			dx,
-			activeSystem
-		)}`;
+			}&${await this.getFormattedDimensionCOForDataElement(
+				dx,
+				activeSystem
+			)}`;
 		const periodDime = await `filter=pe:${pe}`;
 		const orgunitDime = `dimension=ou:${ou}`;
 		const props = await `displayProperty=NAME&skipMeta=false`;
@@ -57,6 +57,7 @@ class MediatorService {
 
 	getFormattedDimensionCOForDataElement = async (dx, activeSystem) => {
 		const logger = new Logger();
+		const utilities = new Utilities();
 		const dimensionMetadata = await this.getFormattedAnalyticsDXUrl(
 			dx,
 			activeSystem
@@ -65,6 +66,7 @@ class MediatorService {
 			if (dimensionMetadata === 'dimension=co') {
 				return dimensionMetadata;
 			} else {
+				console.log
 				await utilities.joinBySymbol(dimensionMetadata, '&');
 			}
 		} else {
@@ -90,16 +92,16 @@ class MediatorService {
 		 */
 		return _.has(dx, 'dimensions') && dx.dimensions.length > 0
 			? _.map(dx.dimensions, (category) => {
-					return `dimension=${
-						category.id
+				return `dimension=${
+					category.id
 					}:${utilities.joinBySymbol(
 						category.options,
 						';'
 					)}`;
-			  })
-			: dx.type === 'dataElement'
-			? `dimension=co`
-			: [];
+			})
+			: dx.type === 'DATA_ELEMENT'
+				? `dimension=co`
+				: [];
 	};
 
 	/**
