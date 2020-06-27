@@ -9,13 +9,13 @@ const async = require('async');
 const _ = require('lodash');
 const chalk = require('chalk');
 
+const mediatorConfig = require('./config/metadata.config');
+const AuthConfig = require('./config/auth.config');
 /***
  *
  */
 const MediatorService = require('./services/mediator.service');
 const OrganizationUnitManager = require('./helpers/organization-unit');
-const mediatorConfig = require('./config/metadata.config');
-const AuthConfig = require('./config/auth.config');
 const Logger = require('./logs/logger.log');
 const Utilities = require('./utils/utils');
 const Authenticate = require('./auth/system.auth');
@@ -25,6 +25,8 @@ const SystemMapping = require('./resources/system/mapping.system');
 const DataValueManagement = require('./resources/data/fetch/datavalue.fetch');
 const DataExchange = require('./resources/data/send/data.send');
 const MetadatManager = require('./resources/system/metadata.system');
+const ReportService = require('./miscellaneous/report.service');
+const UUIDService = require('./miscellaneous/uuid.service');
 
 /***
  *
@@ -47,13 +49,13 @@ class MediatorInit {
 	/***
 	 *
 	 */
-	constructor() { }
+	constructor() {}
 
 	/***
 	 *
 	 */
 	mediatorConfigLauncher = () => {
-		return _.filter(_.keys(mediatorConfig), config => {
+		return _.filter(_.keys(mediatorConfig), (config) => {
 			return mediatorConfig[config].isAllowed;
 		});
 	};
@@ -149,7 +151,7 @@ class MediatorInit {
 							(await activeJob.startsWith('job')) &&
 							(await utilities.isObject(
 								mediatorConfig[activeSystem][
-								activeBatch
+									activeBatch
 								][activeJob]
 							))
 						) {
@@ -473,6 +475,7 @@ class MediatorInit {
 		const authenticator = new Authenticate();
 		const dataExchange = new DataExchange();
 		const systemMapping = new SystemMapping();
+		const reportService = new ReportService();
 		const SystemPayload = [];
 
 		const dirName = await process.cwd();
@@ -550,7 +553,19 @@ class MediatorInit {
 							dataValues: [],
 						};
 
+						const fromSystemPayloadDetails = {
+							completeDate: date.format(
+								new Date(),
+								'YYYY-MM-DD'
+							),
+							period: '',
+							dataValues: [],
+						};
+
 						dataValueBlueprint.period = await analyticsResults
+							.metaData.dimensions.pe[0];
+
+						fromSystemPayloadDetails.period = await analyticsResults
 							.metaData.dimensions.pe[0];
 
 						const dxIndex = await this.getHeaderPropIndex(
@@ -584,7 +599,16 @@ class MediatorInit {
 								const dataId = await analyticsResult[
 									dxIndex
 								];
-
+								await fromSystemPayloadDetails.dataValues.push(
+									{
+										orgUnit: orgUnitId,
+										dataElement: dataId,
+										value: await utilities.getDataValue(
+											analyticsResult,
+											valueIndex
+										),
+									}
+								);
 								await dataValueBlueprint.dataValues.push(
 									{
 										orgUnit: await systemMapping.getOrgUnitUid(
@@ -633,7 +657,7 @@ class MediatorInit {
 									chalk.bold(
 										mediatorConfig[
 											activeSystem
-										].systemInfo.from.toUpperCase()
+										].systemInfo.from.name.toUpperCase()
 									)
 								)} - Prepared to be sent to ${chalk.blue(
 									chalk.bold(
@@ -725,16 +749,16 @@ class MediatorInit {
 													'Message'
 												)
 													? dataMigrationResponse
-														.data
-														.Message
+															.data
+															.Message
 													: _.has(
-														dataMigrationResponse.data,
-														'description'
-													)
-														? dataMigrationResponse
+															dataMigrationResponse.data,
+															'description'
+													  )
+													? dataMigrationResponse
 															.data
 															.description
-														: ''
+													: ''
 											)
 										)} Code: ${chalk.yellow(
 											chalk.bold(
@@ -747,25 +771,74 @@ class MediatorInit {
 									);
 								}
 							} else {
-								/***
-								 *
-								 */
 								if (
 									dataMigrationResponse.data &&
 									dataMigrationResponse.data
 								) {
-									/***
-									 *
-									 */
+									const uuidService = new UUIDService();
 									const responseMessage = await dataMigrationResponse.data;
+									const sourceDetails = await reportService.getReportMetadata(
+										fromSystemPayloadDetails,
+										activeSystem,
+										'source'
+									);
+									const destinationDetails = await reportService.getReportMetadata(
+										dataValueBlueprint,
+										activeSystem,
+										'destination'
+									);
+
+									const messages = _.has(
+										responseMessage,
+										'conflicts'
+									)
+										? await responseMessage.conflicts
+										: [];
+									const respMessage = _.map(
+										messages,
+										(message) => {
+											return _.mapKeys(
+												message,
+												(
+													value,
+													key
+												) => {
+													if (
+														key ===
+														'value'
+													) {
+														return 'message';
+													} else if (
+														key ===
+														'object'
+													) {
+														return 'objectId';
+													} else {
+														return key;
+													}
+												}
+											);
+										}
+									);
 									/***
 									 *
 									 */
+									const payload = await reportService.getMergedPaylaod(
+										sourceDetails,
+										destinationDetails
+									);
+
 									if (
 										responseMessage.status ===
 										'WARNING'
 									) {
-										/***
+										await reportService.createReportDetail(
+											payload,
+											activeSystem,
+											respMessage,
+											'failure'
+										);
+										/**
 										 *
 										 */
 										await appInfo.getWarningInfo(
@@ -776,6 +849,13 @@ class MediatorInit {
 										responseMessage.status ===
 										'SUCCESS'
 									) {
+										await reportService.createReportDetail(
+											payload,
+											activeSystem,
+											respMessage,
+											'success'
+										);
+
 										const alreadySentURLs = await dataExchange.getActiveSystemAlreadySentAPIURLs(
 											activeSystem,
 											activeBatch,
@@ -835,6 +915,13 @@ class MediatorInit {
 											activeSystem
 										);
 									}
+								} else {
+									console.log(
+										'RESPONSE ERROR::: ' +
+											JSON.stringify(
+												responseMessage
+											)
+									);
 								}
 							}
 						} catch (error) {
@@ -961,10 +1048,10 @@ class MediatorInit {
 		}
 	};
 
-	getOrgUnitUids = async chunkedOrgunits => {
+	getOrgUnitUids = async (chunkedOrgunits) => {
 		if (chunkedOrgunits) {
-			return await _.map(chunkedOrgunits, chunkedOrgunit => {
-				return _.map(chunkedOrgunit, orgObj => {
+			return await _.map(chunkedOrgunits, (chunkedOrgunit) => {
+				return _.map(chunkedOrgunit, (orgObj) => {
 					return orgObj.id;
 				});
 			});
@@ -975,7 +1062,7 @@ class MediatorInit {
 	 *
 	 */
 	getHeaderPropIndex = (analyticsResults, dataProp) => {
-		return _.findIndex(analyticsResults.headers, data => {
+		return _.findIndex(analyticsResults.headers, (data) => {
 			return data.name == dataProp;
 		});
 	};
