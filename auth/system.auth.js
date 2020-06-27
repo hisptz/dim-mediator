@@ -22,6 +22,15 @@ class Authentication {
 		};
 	};
 
+	getAPIAuth = (auth) => {
+		return {
+			auth: {
+				username: auth.username,
+				password: auth.password,
+			},
+		};
+	};
+
 	/***
 	 *
 	 */
