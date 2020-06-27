@@ -145,7 +145,7 @@ class AppInfo {
 					chalk.bold(
 						mediatorConfig[
 							activeSystem
-						].systemInfo.from.toUpperCase()
+						].systemInfo.from.name.toUpperCase()
 					)
 				)} to ${chalk.blue(
 					chalk.bold(activeSystem.toUpperCase())

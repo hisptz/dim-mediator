@@ -51,12 +51,12 @@ class OrganizationUnitManager {
 			const dataFromURL = isUsingLiveDhis2
 				? dhis
 				: mediatorConfig[activeSystem].dataFromURL;
-			const orgUnitUsed =
-				mediatorConfig[activeSystem].systemInfo.from;
+			const sourceSystemName =
+				mediatorConfig[activeSystem].systemInfo.from.name;
 			logger.printLogMessageInConsole(
 				'default',
 				`Organization units loaded from ${chalk.green(
-					orgUnitUsed.toUpperCase()
+					sourceSystemName.toUpperCase()
 				)} system`,
 				activeSystem
 			);
