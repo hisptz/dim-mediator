@@ -20,7 +20,30 @@ class Utilities {
 	/***
 	 *
 	 */
-	constructor() { }
+	constructor() {}
+	/**
+	 *
+	 * @param {*} prop
+	 */
+
+	merger = (source, destination) => {
+		return _.merge(source, destination);
+	}	
+
+	isObject = (prop) => {
+		return prop.constructor.name === 'Object'
+			? prop.constructor.name === 'Object'
+			: false;
+	};
+	/**
+	 *
+	 * @param {*} prop
+	 */
+	isArray = (prop) => {
+		return prop.constructor.name === 'Array'
+			? prop.constructor.name === 'Array'
+			: false;
+	};
 
 	/**
 	 *
@@ -39,14 +62,14 @@ class Utilities {
 	/**
 	 *
 	 */
-	isFileExist = path => {
+	isFileExist = (path) => {
 		return fs.accessSync(path);
 	};
 
 	/***
 	 *
 	 */
-	getIndexOfCustomCOC = analytics => {
+	getIndexOfCustomCOC = (analytics) => {
 		/***
 		 *
 		 */
@@ -54,7 +77,7 @@ class Utilities {
 			/***
 			 *
 			 */
-			_.map(analytics.headers, header => {
+			_.map(analytics.headers, (header) => {
 				/***
 				 *
 				 */
@@ -104,7 +127,7 @@ class Utilities {
 				 *
 				 */
 				return _.join(
-					_.map(coSpecialIndex, cocIndex => {
+					_.map(coSpecialIndex, (cocIndex) => {
 						return dataRow[cocIndex];
 					}),
 					'_'
@@ -137,7 +160,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	arrayToObject = orgUnits => {
+	arrayToObject = (orgUnits) => {
 		if (orgUnits) {
 			return orgUnits.reduce((obj, item) => {
 				obj[item.id] = item;
@@ -202,7 +225,7 @@ class Utilities {
 					{
 						recursive: true,
 					},
-					error => {
+					(error) => {
 						if (error)
 							logger.printLogMessageInConsole(
 								'error',
@@ -237,7 +260,7 @@ class Utilities {
 				{
 					recursive: true,
 				},
-				error => {
+				(error) => {
 					if (error)
 						logger.printLogMessageInConsole(
 							'error',
@@ -256,7 +279,7 @@ class Utilities {
 						);
 						return true;
 					} else {
-						fs.appendFile(fullPath, '', error => {
+						fs.appendFile(fullPath, '', (error) => {
 							if (error)
 								logger.printLogMessageInConsole(
 									'error',
@@ -279,7 +302,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	isObject = dataObject => {
+	isObject = (dataObject) => {
 		return dataObject.constructor.name === 'Object'
 			? dataObject.constructor.name === 'Object'
 			: false;
@@ -288,7 +311,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	isArray = dataObject => {
+	isArray = (dataObject) => {
 		return dataObject.constructor.name === 'Array'
 			? dataObject.constructor.name === 'Array'
 			: false;
@@ -297,7 +320,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	URLSanitizer = url => {
+	URLSanitizer = (url) => {
 		return url.replace(/(^\w+:|^)\/\//, '');
 	};
 
@@ -352,7 +375,7 @@ class Utilities {
 				activeBatch,
 				activeJob,
 				date.format(new Date(), 'ddd-YYYY-MM-DD:hh:mm:ss-A') +
-				'.json'
+					'.json'
 			);
 		} catch (error) {
 			/***
@@ -397,16 +420,16 @@ class Utilities {
 	/**
 	 *
 	 */
-	getAlreadySentPayloadURL = urlPath => {
+	getAlreadySentPayloadURL = (urlPath) => {
 		/***
 		 *
 		 */
 		return this.isPathExist(urlPath)
 			? fs
-				.readFileSync(urlPath)
-				.toString()
-				.split('\n')
-				.filter(Boolean)
+					.readFileSync(urlPath)
+					.toString()
+					.split('\n')
+					.filter(Boolean)
 			: [];
 	};
 
@@ -433,10 +456,10 @@ class Utilities {
 		 */
 		return (await urlPath)
 			? await fs
-				.readFileSync(urlPath)
-				.toString()
-				.split('\r\n')
-				.filter(Boolean)
+					.readFileSync(urlPath)
+					.toString()
+					.split('\r\n')
+					.filter(Boolean)
 			: '';
 	};
 
@@ -582,36 +605,36 @@ class Utilities {
 	/***
 	 *
 	 */
-	getActiveAndRunningSystem = async mediatorConfig => {
+	getActiveAndRunningSystem = async (mediatorConfig) => {
 		const systemInfo = new SystemInfo();
 		const utilities = new Utilities();
 		const activeSystems = await systemInfo.getActiveSystem(
 			mediatorConfig
 		);
 
-		const nanga = _.filter(activeSystems, activeSystem => {
+		const nanga = _.filter(activeSystems, (activeSystem) => {
 			return activeSystem
 				? _.filter(
-					systemInfo.getCurrentRunningJob(
-						mediatorConfig,
-						activeSystem,
-						utilities
-					),
-					async job => {
-						return job
-							? (await utilities.getScheduledJobURLs(
-								await utilities.getFilePathForBatches(
-									activeSystem,
-									process.cwd(),
-									job
-								),
-								job
-							)) > 0
-								? activeSystem
-								: ''
-							: [];
-					}
-				)
+						systemInfo.getCurrentRunningJob(
+							mediatorConfig,
+							activeSystem,
+							utilities
+						),
+						async (job) => {
+							return job
+								? (await utilities.getScheduledJobURLs(
+										await utilities.getFilePathForBatches(
+											activeSystem,
+											process.cwd(),
+											job
+										),
+										job
+								  )) > 0
+									? activeSystem
+									: ''
+								: [];
+						}
+				  )
 				: [];
 		});
 	};
@@ -625,10 +648,10 @@ class Utilities {
 			try {
 				return watcherPath
 					? fs
-						.readFileSync(watcherPath)
-						.toString()
-						.split('\n')
-						.filter(Boolean)
+							.readFileSync(watcherPath)
+							.toString()
+							.split('\n')
+							.filter(Boolean)
 					: [];
 			} catch (error) {
 				logger.printLogMessageInConsole(
@@ -644,10 +667,10 @@ class Utilities {
 			try {
 				return creatResponse
 					? await fs
-						.readFileSync(watcherPath)
-						.toString()
-						.split('\n')
-						.filter(Boolean)
+							.readFileSync(watcherPath)
+							.toString()
+							.split('\n')
+							.filter(Boolean)
 					: [];
 			} catch (error) {
 				logger.printLogMessageInConsole(
@@ -662,7 +685,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	isPathExist = path => {
+	isPathExist = (path) => {
 		/***
 		 *
 		 */
@@ -672,7 +695,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	implementFolderAndFileFromPath = async filePath => {
+	implementFolderAndFileFromPath = async (filePath) => {
 		if (filePath) {
 			const foldersPATH = await path.dirname(filePath);
 			const filePATH = await path.basename(filePath);
@@ -834,7 +857,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	resettingDataValuesImportTemplate = dataValueBlueprint => {
+	resettingDataValuesImportTemplate = (dataValueBlueprint) => {
 		dataValueBlueprint.completeDate = '';
 		dataValueBlueprint.dataValues = [];
 		dataValueBlueprint.period = '';
@@ -997,7 +1020,7 @@ class Utilities {
 					fs.appendFile(
 						emptyRowsURLPath,
 						`${analyticURL}\r\n`,
-						err => {
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
@@ -1042,7 +1065,7 @@ class Utilities {
 			fs.writeFile(
 				payloadFilePath,
 				JSON.stringify(dataValueBlueprint),
-				err => {
+				(err) => {
 					if (err)
 						logger.printLogMessageInConsole(
 							'error',
@@ -1066,7 +1089,7 @@ class Utilities {
 										new Date(),
 										'ddd, YYYY-MM DD:hh:mm:ssA'
 									)}] - [Total Data Sent: ${loadedDataSize}] --> ${analyticURL}\r\n`,
-									error => {
+									(error) => {
 										if (error)
 											logger.printLogMessageInConsole(
 												'error',
@@ -1089,16 +1112,16 @@ class Utilities {
 										'Message'
 									)
 										? dataMigrationResponse
-											.data
-											.Message
+												.data
+												.Message
 										: _.has(
-											dataMigrationResponse.data,
-											'description'
-										)
-											? dataMigrationResponse
+												dataMigrationResponse.data,
+												'description'
+										  )
+										? dataMigrationResponse
 												.data
 												.description
-											: ''
+										: ''
 								)
 							)} Code: ${chalk.yellow(
 								chalk.bold(
@@ -1147,7 +1170,7 @@ class Utilities {
 					fs.appendFile(
 						apiURLAlreadySentPathFile,
 						`${analyticURL}\n`,
-						err => {
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
@@ -1215,9 +1238,11 @@ class Utilities {
 						);
 					fs.appendFile(
 						logsPathFile,
-						`Total Number Of Data Remained To Be Sent::: ${globalURL.length -
-						alreadySentURL.length}\r\n`,
-						err => {
+						`Total Number Of Data Remained To Be Sent::: ${
+							globalURL.length -
+							alreadySentURL.length
+						}\r\n`,
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
