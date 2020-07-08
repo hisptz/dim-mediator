@@ -10,14 +10,14 @@ class Authentication {
 	/***
 	 *
 	 */
-	getSystemAuth = (AuthConfig, systemNameId) => {
+	getAPIAuth = (APConfig) => {
 		/***
 		 *
 		 */
 		return {
 			auth: {
-				username: AuthConfig[systemNameId].username,
-				password: AuthConfig[systemNameId].password,
+				username: APConfig.username,
+				password: APConfig.password,
 			},
 		};
 	};
@@ -25,28 +25,50 @@ class Authentication {
 	/***
 	 *
 	 */
-	getSystemAuthForAPICall = (AuthConfig, systemNameId) => {
-		/***
-		 *
-		 */
-		return `${AuthConfig[systemNameId].username}:${AuthConfig[systemNameId].password}@`;
-	};
-
-	/***
-	 *
-	 */
-	getSecondarySystemAuthForDataExchange = (AuthConfig, systemNameId) => {
+	getSystemAuth = (AuthConfig, activeSystem) => {
 		/***
 		 *
 		 */
 		return {
 			auth: {
-				username:
-					AuthConfig[systemNameId].authSecondarySystem
-						.username,
-				password:
-					AuthConfig[systemNameId].authSecondarySystem
-						.password,
+				username: AuthConfig[activeSystem].username,
+				password: AuthConfig[activeSystem].password,
+			},
+		};
+	};
+
+	getAPIAuth = (auth) => {
+		return {
+			auth: {
+				username: auth.username,
+				password: auth.password,
+			},
+		};
+	};
+
+	/***
+	 *
+	 */
+	getSystemAuthForAPICall = (AuthConfig, activeSystem) => {
+		/***
+		 *
+		 */
+		return `${AuthConfig[activeSystem].username}:${AuthConfig[activeSystem].password}@`;
+	};
+
+	/***
+	 *
+	 */
+	getSecondarySystemAuthForDataExchange = (AuthConfig, activeSystem) => {
+		/***
+		 *
+		 */
+		return {
+			auth: {
+				username: AuthConfig[activeSystem].authSecondarySystem
+					.username,
+				password: AuthConfig[activeSystem].authSecondarySystem
+					.password,
 			},
 		};
 	};

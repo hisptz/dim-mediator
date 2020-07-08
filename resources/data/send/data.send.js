@@ -8,10 +8,10 @@ const Analytics = require('../../data/fetch/analytics.fetch');
 const DataValueManagement = require('../../data/fetch/datavalue.fetch');
 const SystemInfo = require('../../system/details.system');
 const Utilities = require('../../../utils/utils');
-const mediatorConfig = require('../../../config/metadata.config');
+const appGlobalConfig = require('../../../config/metadata.config');
 
 class DataExchange {
-	constructor() { }
+	constructor() {}
 
 	/**
 	 *
@@ -33,8 +33,53 @@ class DataExchange {
 	/**
 	 *
 	 */
+	performDataMigrationAcrossSystemsDataFromAPI = async (
+		payload,
+		systemImportURL,
+		systemAuth,
+		activeSystem
+	) => {
+		const logger = new Logger();
+		try {
+			return await axios.post(systemImportURL, payload, systemAuth);
+		} catch (error) {
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
+	/**
+	 *
+	 */
 	getUniqueAlreadySentURL = (url, urls) => {
 		return _.uniq([...url, ...urls]);
+	};
+
+	/**
+	 *
+	 */
+	getActiveSystemAlreadySentAPIURLsDataFromAPI = (
+		activeSystem,
+		isDataFromAPI
+	) => {
+		const logger = new Logger();
+		const utilities = new Utilities();
+		if (isDataFromAPI) {
+			const apiURLAlreadySentPathFile = utilities.getAlreadySentPayloadFilePathDataFromAPI(
+				activeSystem,
+				isDataFromAPI
+			);
+			try {
+				return utilities.getAlreadySentPayloadURL(
+					apiURLAlreadySentPathFile
+				);
+			} catch (error) {
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		}
 	};
 
 	/**
@@ -95,18 +140,18 @@ class DataExchange {
 		const SystemPayload = [];
 
 		const activeSystem = await systemInfo.getCurrentRunningSystem(
-			mediatorConfig
+			appGlobalConfig
 		);
 		const dirName = await process.cwd();
 		const activeJob =
 			(await systemInfo.getCurrentRunningJob(
-				mediatorConfig,
+				appGlobalConfig,
 				activeSystem
 			)) !== undefined
 				? systemInfo.getCurrentRunningJob(
-					mediatorConfig,
-					activeSystem
-				)
+						appGlobalConfig,
+						activeSystem
+				  )
 				: null;
 
 		const successfullyPayloadsFilePath = await utilities.getPayloadsFilePathForSuccessDataExchange(
@@ -127,12 +172,12 @@ class DataExchange {
 		);
 
 		const systemImportURL = await systemInfo.getActiveSystemImportURL(
-			mediatorConfig,
+			appGlobalConfig,
 			activeSystem
 		);
 
 		const isUsingHIM = await systemInfo.isUsingHIMMediatorSystem(
-			mediatorConfig,
+			appGlobalConfig,
 			activeSystem
 		);
 
@@ -171,15 +216,47 @@ class DataExchange {
 						);
 
 						try {
-							analyticsResults.rows.forEach(row => {
-								const orgUnitId = row[ouIndex];
-								dataValueBlueprint.dataValues.push(
-									{
+							analyticsResults.rows.forEach(
+								(row) => {
+									const orgUnitId =
+										row[ouIndex];
+									dataValueBlueprint.dataValues.push(
+										{
+											orgUnit: MediatorInit.orgUnitPayload
+												? MediatorInit
+														.orgUnitPayload[
+														orgUnitId
+												  ].code
+												: '',
+											dataElement:
+												row[
+													dxIndex
+												],
+											categoryOptionCombo: row[
+												coIndex
+											]
+												? row[
+														coIndex
+												  ]
+												: systemInfo.getCurrentRunningSystemCOC(
+														appGlobalConfig,
+														activeSystem
+												  ),
+											value: parseInt(
+												row[
+													valueIndex
+												]
+											),
+											comment: '',
+											dataSet: systemReceivingDatasetUid,
+										}
+									);
+									SystemPayload.push({
 										orgUnit: MediatorInit.orgUnitPayload
 											? MediatorInit
-												.orgUnitPayload[
-												orgUnitId
-											].code
+													.orgUnitPayload[
+													orgUnitId
+											  ].code
 											: '',
 										dataElement:
 											row[dxIndex],
@@ -188,41 +265,19 @@ class DataExchange {
 										]
 											? row[coIndex]
 											: systemInfo.getCurrentRunningSystemCOC(
-												mediatorConfig,
-												activeSystem
-											),
+													appGlobalConfig,
+													activeSystem
+											  ),
 										value: parseInt(
 											row[
-											valueIndex
+												valueIndex
 											]
 										),
 										comment: '',
 										dataSet: systemReceivingDatasetUid,
-									}
-								);
-								SystemPayload.push({
-									orgUnit: MediatorInit.orgUnitPayload
-										? MediatorInit
-											.orgUnitPayload[
-											orgUnitId
-										].code
-										: '',
-									dataElement: row[dxIndex],
-									categoryOptionCombo: row[
-										coIndex
-									]
-										? row[coIndex]
-										: systemInfo.getCurrentRunningSystemCOC(
-											mediatorConfig,
-											activeSystem
-										),
-									value: parseInt(
-										row[valueIndex]
-									),
-									comment: '',
-									dataSet: systemReceivingDatasetUid,
-								});
-							});
+									});
+								}
+							);
 							logger.printLogMessageInConsole(
 								'info',
 								`Data Loaded From DHIS2 HMIS - Sent To PlanREP::: ${dataValueBlueprint.dataValues.length} Data values`,

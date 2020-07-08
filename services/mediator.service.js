@@ -44,9 +44,9 @@ class MediatorService {
 		const api = await `api/analytics.json`;
 		const dataDime = await `dimension=dx:${
 			dx.id
-			}&${await utilities.joinBySymbol(
-				await this.getFormattedAnalyticsDXUrl(dx, activeSystem),
-				'&'
+			}&${await this.getFormattedDimensionCOForDataElement(
+				dx,
+				activeSystem
 			)}`;
 		const periodDime = await `filter=pe:${pe}`;
 		const orgunitDime = `dimension=ou:${ou}`;
@@ -54,6 +54,52 @@ class MediatorService {
 		const APIUrl = await `${hostname}${api}?${dataDime}&${periodDime}&${orgunitDime}&${props}`;
 		return APIUrl;
 	}
+
+	/***
+	 *
+	 */
+	async generateAnalyticsURLDataFromAPI(
+		appGlobalConfig,
+		activeSystem,
+		pageDetails
+	) {
+		const arrURL = [];
+		const marginal =
+			_.has(pageDetails, 'total') && _.has(pageDetails, 'pageSize')
+				? Math.ceil(pageDetails.total / pageDetails.pageSize)
+				: 1;
+		if (activeSystem && marginal) {
+			for (let i = 1; i <= marginal; i++) {
+				arrURL.push(
+					`${appGlobalConfig[activeSystem].dataFromURL}api/payloads?page=${i}`
+				);
+			}
+			return arrURL;
+		}
+	}
+
+	getFormattedDimensionCOForDataElement = async (dx, activeSystem) => {
+		const logger = new Logger();
+		const utilities = new Utilities();
+		const dimensionMetadata = await this.getFormattedAnalyticsDXUrl(
+			dx,
+			activeSystem
+		);
+		if (dx && activeSystem) {
+			if (dimensionMetadata === 'dimension=co') {
+				return dimensionMetadata;
+			} else {
+				console.log;
+				await utilities.joinBySymbol(dimensionMetadata, '&');
+			}
+		} else {
+			logger.printLogMessageInConsole(
+				'error',
+				`No active system or data found`,
+				activeSystem
+			);
+		}
+	};
 
 	/***
 	 *
@@ -68,7 +114,7 @@ class MediatorService {
 		 *
 		 */
 		return _.has(dx, 'dimensions') && dx.dimensions.length > 0
-			? _.map(dx.dimensions, category => {
+			? _.map(dx.dimensions, (category) => {
 				return `dimension=${
 					category.id
 					}:${utilities.joinBySymbol(
@@ -76,7 +122,7 @@ class MediatorService {
 						';'
 					)}`;
 			})
-			: dx.type === 'dataElement'
+			: dx.type === 'DATA_ELEMENT'
 				? `dimension=co`
 				: [];
 	};
@@ -112,13 +158,13 @@ class MediatorService {
 	/**
 	 *
 	 */
-	getData = async url => {
+	getData = async (url) => {
 		const logger = new Logger();
 		const authenticator = new Authenticate();
 		try {
 			return await axios
 				.get(url, authenticator.getHMISPortalSuperAuth())
-				.catch(error =>
+				.catch((error) =>
 					logger.printLogMessageInConsole('error', error)
 				);
 		} catch (error) {

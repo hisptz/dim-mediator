@@ -8,10 +8,11 @@ const fs = require('fs');
 /***
  *
  */
-const mediatorConfig = require('../../config/metadata.config');
 const MediatorService = require('../../services/mediator.service');
+const APIService = require('../../services/api.service');
 const Utilities = require('../../utils/utils');
 const Logger = require('../../logs/logger.log');
+const appGlobalConfig = require('../../config/metadata.config.example');
 
 /***
  *
@@ -26,6 +27,7 @@ class MetadataManager {
      *
      */
     getActiveSystemPeriodDimension = async (
+        appGlobalConfig,
         activeSystem,
         activeBatch,
         activeJob
@@ -39,25 +41,27 @@ class MetadataManager {
              */
             return await _.flatten(
                 _.map(
-                    mediatorConfig[activeSystem][activeBatch][
+                    appGlobalConfig[activeSystem][activeBatch][
                         activeJob
                     ].pe.periods,
-                    period => {
-                        return mediatorConfig[activeSystem][
+                    (period) => {
+                        return appGlobalConfig[activeSystem][
                                 activeBatch
                             ][activeJob].pe.subPeriods.length > 0 ?
                             _.map(
-                                mediatorConfig[
+                                appGlobalConfig[
                                     activeSystem
                                 ][activeBatch][activeJob]
                                 .pe.subPeriods,
-                                subPeriod => {
+                                (subPeriod) => {
                                     return (
                                         period +
                                         subPeriod
                                     );
                                 }
                             ) :
+                            _.has(period, 'id') ?
+                            period.id :
                             period;
                     }
                 )
@@ -68,25 +72,27 @@ class MetadataManager {
              */
             return await _.flatten(
                 _.map(
-                    mediatorConfig[activeSystem][activeBatch][
+                    appGlobalConfig[activeSystem][activeBatch][
                         activeJob
                     ].pe.periods,
-                    period => {
-                        return mediatorConfig[activeSystem][
+                    (period) => {
+                        return appGlobalConfig[activeSystem][
                                 activeBatch
                             ][activeJob].pe.subPeriods.length > 0 ?
                             _.map(
-                                mediatorConfig[
+                                appGlobalConfig[
                                     activeSystem
                                 ][activeBatch][activeJob]
                                 .pe.subPeriods,
-                                subPeriod => {
+                                (subPeriod) => {
                                     return (
                                         period +
                                         subPeriod
                                     );
                                 }
                             ) :
+                            _.has(period, 'id') ?
+                            period.id :
                             period;
                     }
                 )
@@ -97,7 +103,7 @@ class MetadataManager {
     /***
      *
      */
-    getActiveSystemDataDimension = (activeSystem, activeBatch, activeJob) => {
+    getActiveSystemDataDimension = (appGlobalConfig, activeSystem, activeBatch, activeJob) => {
         /***
          *
          */
@@ -107,10 +113,10 @@ class MetadataManager {
              */
             return _.chunk(
                 _.map(
-                    mediatorConfig[activeSystem][activeBatch][
+                    appGlobalConfig[activeSystem][activeBatch][
                         activeJob
                     ].dx.data,
-                    data => {
+                    (data) => {
                         return data;
                     }
                 ),
@@ -122,10 +128,10 @@ class MetadataManager {
              */
             return _.chunk(
                 _.map(
-                    mediatorConfig[activeSystem][activeBatch][
+                    appGlobalConfig[activeSystem][activeBatch][
                         activeJob
                     ].dx.data,
-                    data => {
+                    (data) => {
                         return data;
                     }
                 ),
@@ -133,7 +139,6 @@ class MetadataManager {
             );
         }
     };
-    
 
     /***
      *
@@ -233,7 +238,9 @@ class MetadataManager {
                                             fs.appendFile(
                                                 apiURLPathFile,
                                                 `${formattedURL}\r\n`,
-                                                err => {
+                                                (
+                                                    err
+                                                ) => {
                                                     if (
                                                         err
                                                     )
@@ -265,6 +272,86 @@ class MetadataManager {
                 }
             }
         }
+    };
+
+    prepareAnalyticsURLForDataFetchDataFromAPI = async (
+        activeSystem,
+        appGlobalConfig
+    ) => {
+        const apiService = new APIService();
+
+        /***
+         *
+         */
+        const mediatorService = new MediatorService();
+        const logger = new Logger();
+        let apiURLPathFile = '';
+        /***
+         *
+         */
+        if (activeSystem) {
+            apiURLPathFile = path.join(
+                process.cwd(),
+                'private',
+                'log',
+                activeSystem,
+                'fetch.txt'
+            );
+        }
+
+        const APIResults = await apiService.getSystemPayloads(
+            appGlobalConfig,
+            activeSystem
+        );
+
+        const pageDetails = (await _.has(APIResults.data, 'pager')) ?
+            APIResults.data.pager :
+            {};
+
+        const formattedURLs = await mediatorService.generateAnalyticsURLDataFromAPI(
+            appGlobalConfig,
+            activeSystem,
+            pageDetails
+        );
+
+        await _.forEach(formattedURLs, (formattedURL) => {
+            try {
+                fs.open(apiURLPathFile, 'a', (err, fd) => {
+                    if (err)
+                        logger.printLogMessageInConsole(
+                            'error',
+                            err,
+                            activeSystem
+                        );
+                    try {
+                        fs.appendFile(
+                            apiURLPathFile,
+                            `${formattedURL}\r\n`,
+                            (err) => {
+                                if (err)
+                                    logger.printLogMessageInConsole(
+                                        'error',
+                                        err,
+                                        activeSystem
+                                    );
+                            }
+                        );
+                    } catch (error) {
+                        logger.printLogMessageInConsole(
+                            'error',
+                            error,
+                            activeSystem
+                        );
+                    }
+                });
+            } catch (error) {
+                logger.printLogMessageInConsole(
+                    'error',
+                    error,
+                    activeSystem
+                );
+            }
+        });
     };
 }
 

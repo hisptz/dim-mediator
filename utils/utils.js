@@ -20,7 +20,46 @@ class Utilities {
 	/***
 	 *
 	 */
-	constructor() { }
+	constructor() {}
+	/**
+	 *
+	 * @param {*} prop
+	 */
+
+	convertArrayToObject = (array, key) => {
+		const initialValue = {};
+		return array.reduce((obj, item) => {
+			return {
+				...obj,
+				[_.join(
+					_.concat(
+						_.split(item.systemInfo.from[key], ' '),
+						_.split(item.systemInfo.to[key], ' ')
+					),
+					'_'
+				)]: item,
+			};
+		}, initialValue);
+	};
+
+	merger = (source, destination) => {
+		return _.merge(source, destination);
+	};
+
+	isObject = (prop) => {
+		return prop.constructor.name === 'Object'
+			? prop.constructor.name === 'Object'
+			: false;
+	};
+	/**
+	 *
+	 * @param {*} prop
+	 */
+	isArray = (prop) => {
+		return prop.constructor.name === 'Array'
+			? prop.constructor.name === 'Array'
+			: false;
+	};
 
 	/**
 	 *
@@ -39,14 +78,14 @@ class Utilities {
 	/**
 	 *
 	 */
-	isFileExist = path => {
+	isFileExist = (path) => {
 		return fs.accessSync(path);
 	};
 
 	/***
 	 *
 	 */
-	getIndexOfCustomCOC = analytics => {
+	getIndexOfCustomCOC = (analytics) => {
 		/***
 		 *
 		 */
@@ -54,7 +93,7 @@ class Utilities {
 			/***
 			 *
 			 */
-			_.map(analytics.headers, header => {
+			_.map(analytics.headers, (header) => {
 				/***
 				 *
 				 */
@@ -79,7 +118,7 @@ class Utilities {
 	 *
 	 */
 	getCategoryOptionCombo = (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		indexOfCO,
 		coSpecialIndex,
@@ -93,7 +132,7 @@ class Utilities {
 		 *
 		 */
 		if (
-			mediatorConfig &&
+			appGlobalConfig &&
 			activeSystem &&
 			indexOfCO &&
 			coSpecialIndex &&
@@ -104,7 +143,7 @@ class Utilities {
 				 *
 				 */
 				return _.join(
-					_.map(coSpecialIndex, cocIndex => {
+					_.map(coSpecialIndex, (cocIndex) => {
 						return dataRow[cocIndex];
 					}),
 					'_'
@@ -113,8 +152,8 @@ class Utilities {
 				/***
 				 *
 				 */
-				return mediatorConfig[activeSystem].defaultCOC
-					? mediatorConfig[activeSystem].defaultCOC
+				return appGlobalConfig[activeSystem].defaultCOC
+					? appGlobalConfig[activeSystem].defaultCOC
 					: '';
 			} else if (indexOfCO) {
 				/***
@@ -137,7 +176,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	arrayToObject = orgUnits => {
+	arrayToObject = (orgUnits) => {
 		if (orgUnits) {
 			return orgUnits.reduce((obj, item) => {
 				obj[item.id] = item;
@@ -202,7 +241,7 @@ class Utilities {
 					{
 						recursive: true,
 					},
-					error => {
+					(error) => {
 						if (error)
 							logger.printLogMessageInConsole(
 								'error',
@@ -237,7 +276,7 @@ class Utilities {
 				{
 					recursive: true,
 				},
-				error => {
+				(error) => {
 					if (error)
 						logger.printLogMessageInConsole(
 							'error',
@@ -256,7 +295,7 @@ class Utilities {
 						);
 						return true;
 					} else {
-						fs.appendFile(fullPath, '', error => {
+						fs.appendFile(fullPath, '', (error) => {
 							if (error)
 								logger.printLogMessageInConsole(
 									'error',
@@ -279,7 +318,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	isObject = dataObject => {
+	isObject = (dataObject) => {
 		return dataObject.constructor.name === 'Object'
 			? dataObject.constructor.name === 'Object'
 			: false;
@@ -288,7 +327,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	isArray = dataObject => {
+	isArray = (dataObject) => {
 		return dataObject.constructor.name === 'Array'
 			? dataObject.constructor.name === 'Array'
 			: false;
@@ -297,7 +336,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	URLSanitizer = url => {
+	URLSanitizer = (url) => {
 		return url.replace(/(^\w+:|^)\/\//, '');
 	};
 
@@ -321,6 +360,29 @@ class Utilities {
 				dirName,
 				[`files`, activeSystem.toString()],
 				activeSystem.toString()
+			);
+		}
+	};
+
+	/**
+	 *
+	 */
+	createFoldersForStoringPayloadsDataFromAPI = (
+		dirName,
+		activeSystem,
+		isDataFromAPI
+	) => {
+		if (activeSystem && isDataFromAPI) {
+			this.createFolder(
+				dirName,
+				[`files`, activeSystem],
+				activeSystem
+			);
+		} else {
+			this.createFolder(
+				dirName,
+				[`files`, activeSystem],
+				activeSystem
 			);
 		}
 	};
@@ -352,7 +414,69 @@ class Utilities {
 				activeBatch,
 				activeJob,
 				date.format(new Date(), 'ddd-YYYY-MM-DD:hh:mm:ss-A') +
-				'.json'
+					'.json'
+			);
+		} catch (error) {
+			/***
+			 *
+			 */
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
+	/**
+	 *
+	 */
+	getPayloadsFilePathForSuccessDataExchangeDataFromAPI = (
+		dirName,
+		activeSystem
+	) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		try {
+			/***
+			 *
+			 */
+			return path.join(
+				dirName,
+				'files',
+				activeSystem,
+				date.format(new Date(), 'ddd-YYYY-MM-DD:hh:mm:ss-A') +
+					'.json'
+			);
+		} catch (error) {
+			/***
+			 *
+			 */
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
+	/**
+	 *
+	 */
+	getAlreadySentPayloadFilePathDataFromAPI = (
+		activeSystem,
+		isDataFromAPI
+	) => {
+		/***
+		 *
+		 */
+		try {
+			/***
+			 *
+			 */
+			return path.join(
+				process.cwd(),
+				'private',
+				'log',
+				activeSystem,
+				'sent.txt'
 			);
 		} catch (error) {
 			/***
@@ -397,19 +521,46 @@ class Utilities {
 	/**
 	 *
 	 */
-	getAlreadySentPayloadURL = urlPath => {
+	getAlreadySentPayloadURL = (urlPath) => {
 		/***
 		 *
 		 */
 		return this.isPathExist(urlPath)
 			? fs
-				.readFileSync(urlPath)
-				.toString()
-				.split('\n')
-				.filter(Boolean)
+					.readFileSync(urlPath)
+					.toString()
+					.split('\n')
+					.filter(Boolean)
 			: [];
 	};
 
+	/**
+	 *
+	 */
+	getAllURLForDataToBeSentDataFromAPI = async (
+		dirName,
+		activeSystem,
+		isDataFromAPI
+	) => {
+		/***
+		 *
+		 */
+		const urlPath = await this.getAllURLForDataToBeSentFilePathDataFromAPI(
+			dirName,
+			activeSystem,
+			isDataFromAPI
+		);
+		/***
+		 *
+		 */
+		return (await urlPath)
+			? await fs
+					.readFileSync(urlPath)
+					.toString()
+					.split('\r\n')
+					.filter(Boolean)
+			: '';
+	};
 	/**
 	 *
 	 */
@@ -433,12 +584,38 @@ class Utilities {
 		 */
 		return (await urlPath)
 			? await fs
-				.readFileSync(urlPath)
-				.toString()
-				.split('\r\n')
-				.filter(Boolean)
+					.readFileSync(urlPath)
+					.toString()
+					.split('\r\n')
+					.filter(Boolean)
 			: '';
 	};
+
+	// /**
+	//  *
+	//  */
+	// getAllURLForDataToBeSentDataFromAPI = async (
+	// 	dirName,
+	// 	activeJob
+	// ) => {
+	// 	/***
+	// 	 *
+	// 	 */
+	// 	const urlPath = await this.getAllURLForDataToBeSentFilePathDataFromAPI(
+	// 		dirName,
+	// 		activeSystem,
+	// 	);
+	// 	/***
+	// 	 *
+	// 	 */
+	// 	return (await urlPath)
+	// 		? await fs
+	// 				.readFileSync(urlPath)
+	// 				.toString()
+	// 				.split('\r\n')
+	// 				.filter(Boolean)
+	// 		: '';
+	// };
 
 	/***
 	 *
@@ -473,6 +650,29 @@ class Utilities {
 		}
 	};
 
+	getAllURLForDataToBeSentFilePathDataFromAPI = (dirName, activeSystem) => {
+		/***
+		 *
+		 */
+		try {
+			/***
+			 *
+			 */
+			return path.join(
+				dirName,
+				'private',
+				'log',
+				activeSystem,
+				'fetch.txt'
+			);
+		} catch (error) {
+			/***
+			 *
+			 */
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
 	/**
 	 *
 	 */
@@ -491,24 +691,54 @@ class Utilities {
 		activeBatch,
 		activeJOB
 	) => {
-		/***
-		 *
-		 */
-		this.createFolderForSavingLogs(
-			dirName,
-			activeSystem,
-			activeBatch,
-			activeJOB
-		);
-		/***
-		 *
-		 */
-		this.createFoldersForStoringPayloads(
-			dirName,
-			activeSystem,
-			activeBatch,
-			activeJOB
-		);
+		if (activeSystem) {
+			/***
+			 *
+			 */
+			this.createFolderForSavingLogs(
+				dirName,
+				activeSystem,
+				activeBatch,
+				activeJOB
+			);
+			/***
+			 *
+			 */
+			this.createFoldersForStoringPayloads(
+				dirName,
+				activeSystem,
+				activeBatch,
+				activeJOB
+			);
+		}
+	};
+
+	/***
+	 *
+	 */
+	prepareLogEnvironmenDataFromAPI = (
+		dirName,
+		activeSystem,
+		isDataFromAPI
+	) => {
+		if (activeSystem && isDataFromAPI) {
+			/***
+			 *
+			 */
+			this.createFolderForSavingLogsDataFromAPI(
+				dirName,
+				activeSystem,
+				isDataFromAPI
+			);
+			/***
+			 *
+			 */
+			this.createFoldersForStoringPayloadsDataFromAPI(
+				dirName,
+				activeSystem,
+				isDataFromAPI
+			);
+		}
 	};
 
 	/**
@@ -579,39 +809,93 @@ class Utilities {
 		}
 	};
 
+	getFilePathForWatcherConfig = async (dirName, activeSystem) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+
+		const filePath = await path.join(
+			dirName,
+			'batch',
+			activeSystem,
+			'watcher.txt'
+		);
+
+		if (this.isPathExist(filePath)) {
+			try {
+				return await path.join(
+					dirName,
+					'batch',
+					activeSystem,
+					'watcher.txt'
+				);
+			} catch (error) {
+				await logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		} else {
+			try {
+				const createResponse = await this.implementFolderAndFileFromPath(
+					filePath
+				);
+				if (createResponse) {
+					return await path.join(
+						dirName,
+						'batch',
+						activeSystem,
+						'watcher.txt'
+					);
+				}
+			} catch (error) {
+				await logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		}
+	};
+
 	/***
 	 *
 	 */
-	getActiveAndRunningSystem = async mediatorConfig => {
+	getActiveAndRunningSystem = async (appGlobalConfig) => {
 		const systemInfo = new SystemInfo();
 		const utilities = new Utilities();
 		const activeSystems = await systemInfo.getActiveSystem(
-			mediatorConfig
+			appGlobalConfig
 		);
 
-		const nanga = _.filter(activeSystems, activeSystem => {
+		const nanga = _.filter(activeSystems, (activeSystem) => {
 			return activeSystem
 				? _.filter(
-					systemInfo.getCurrentRunningJob(
-						mediatorConfig,
-						activeSystem,
-						utilities
-					),
-					async job => {
-						return job
-							? (await utilities.getScheduledJobURLs(
-								await utilities.getFilePathForBatches(
-									activeSystem,
-									process.cwd(),
-									job
-								),
-								job
-							)) > 0
-								? activeSystem
-								: ''
-							: [];
-					}
-				)
+						systemInfo.getCurrentRunningJob(
+							appGlobalConfig,
+							activeSystem,
+							utilities
+						),
+						async (job) => {
+							return job
+								? (await utilities.getScheduledJobURLs(
+										await utilities.getFilePathForBatches(
+											activeSystem,
+											process.cwd(),
+											job
+										),
+										job
+								  )) > 0
+									? activeSystem
+									: ''
+								: [];
+						}
+				  )
 				: [];
 		});
 	};
@@ -625,10 +909,10 @@ class Utilities {
 			try {
 				return watcherPath
 					? fs
-						.readFileSync(watcherPath)
-						.toString()
-						.split('\n')
-						.filter(Boolean)
+							.readFileSync(watcherPath)
+							.toString()
+							.split('\n')
+							.filter(Boolean)
 					: [];
 			} catch (error) {
 				logger.printLogMessageInConsole(
@@ -644,10 +928,50 @@ class Utilities {
 			try {
 				return creatResponse
 					? await fs
-						.readFileSync(watcherPath)
-						.toString()
-						.split('\n')
-						.filter(Boolean)
+							.readFileSync(watcherPath)
+							.toString()
+							.split('\n')
+							.filter(Boolean)
+					: [];
+			} catch (error) {
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeJob
+				);
+			}
+		}
+	};
+
+	getScheduledJobURLsDataFromAPI = async (watcherPath) => {
+		const logger = new Logger();
+		if (await this.isPathExist(watcherPath)) {
+			try {
+				return watcherPath
+					? fs
+							.readFileSync(watcherPath)
+							.toString()
+							.split('\n')
+							.filter(Boolean)
+					: [];
+			} catch (error) {
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeJob
+				);
+			}
+		} else {
+			const creatResponse = await this.implementFolderAndFileFromPath(
+				watcherPath
+			);
+			try {
+				return creatResponse
+					? await fs
+							.readFileSync(watcherPath)
+							.toString()
+							.split('\n')
+							.filter(Boolean)
 					: [];
 			} catch (error) {
 				logger.printLogMessageInConsole(
@@ -662,7 +986,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	isPathExist = path => {
+	isPathExist = (path) => {
 		/***
 		 *
 		 */
@@ -672,7 +996,7 @@ class Utilities {
 	/***
 	 *
 	 */
-	implementFolderAndFileFromPath = async filePath => {
+	implementFolderAndFileFromPath = async (filePath) => {
 		if (filePath) {
 			const foldersPATH = await path.dirname(filePath);
 			const filePATH = await path.basename(filePath);
@@ -726,6 +1050,103 @@ class Utilities {
 			);
 		} catch (error) {
 			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
+	/**
+	 *
+	 */
+	getURLFilePathForSuccessDataExchangeDataFromAPI = (
+		dirName,
+		activeSystem
+	) => {
+		try {
+			return path.join(
+				dirName,
+				'private',
+				'log',
+				activeSystem,
+				'success.txt'
+			);
+		} catch (error) {
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
+	/**
+	 *
+	 */
+	createFolderForSavingLogsDataFromAPI = (
+		dirName,
+		activeSystem,
+		isDataFromAPI
+	) => {
+		if (activeSystem && isDataFromAPI) {
+			/***
+			 *  Folder and file for storing logs
+			 */
+			this.createFolderAndFilePath(
+				dirName,
+				[`logs`, `res`, activeSystem],
+				`logs.txt`,
+				`<All Console Messages>`,
+				activeSystem
+			);
+
+			/***
+			 * Folder and file for storing successfully operations
+			 */
+			this.createFolderAndFilePath(
+				dirName,
+				[`private`, `log`, activeSystem],
+				`success.txt`,
+				`<Data Sent Success logs>`,
+				activeSystem
+			);
+
+			/***
+			 * Folder and file for storing data to be fetched from systems
+			 */
+			this.createFolderAndFilePath(
+				dirName,
+				[`private`, `log`, activeSystem],
+				`fetch.txt`,
+				`<URL for fetching data>`,
+				activeSystem
+			);
+
+			/***
+			 * Folder and file for storing already sent data
+			 */
+			this.createFolderAndFilePath(
+				dirName,
+				[`private`, `log`, activeSystem],
+				`sent.txt`,
+				`<URL for already sent data>`,
+				activeSystem
+			);
+
+			/***
+			 * Folder and file for storing empty returned data
+			 */
+			this.createFolderAndFilePath(
+				dirName,
+				[`private`, `log`, activeSystem],
+				`empty.txt`,
+				`<URL for Data returning empty rows>`,
+				activeSystem
+			);
+
+			/***
+			 *  Folder and file for watching system batch execution
+			 */
+			this.createFolderAndFilePath(
+				dirName,
+				[`batch`, activeSystem],
+				`watcher.txt`,
+				`<All watcher information>`,
+				activeSystem
+			);
 		}
 	};
 
@@ -834,7 +1255,7 @@ class Utilities {
 	/**
 	 *
 	 */
-	resettingDataValuesImportTemplate = dataValueBlueprint => {
+	resettingDataValuesImportTemplate = (dataValueBlueprint) => {
 		dataValueBlueprint.completeDate = '';
 		dataValueBlueprint.dataValues = [];
 		dataValueBlueprint.period = '';
@@ -866,6 +1287,61 @@ class Utilities {
 				activeSystem,
 				activeBatch,
 				activeJob,
+				'fetch.txt'
+			);
+
+			/***
+			 *
+			 */
+			fs.truncate(apiURLPathFile, 0, () => {
+				logger.printLogMessageInConsole(
+					'info',
+					`Successfully reset values of API URL for data fetching`,
+					activeSystem
+				);
+			});
+		} else {
+			/***
+			 *
+			 */
+			const apiURLPathFile = path.join(
+				process.cwd(),
+				'private',
+				'log',
+				activeSystem,
+				'fetch.txt'
+			);
+
+			/***
+			 *
+			 */
+			fs.truncate(apiURLPathFile, 0, () => {
+				logger.printLogMessageInConsole(
+					'info',
+					`Successfully reset values of API URL for data fetching`,
+					activeSystem
+				);
+			});
+		}
+	};
+
+	resetValuesForAPIURLToFetchDataInAFileDataFromAPI = (activeSystem) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		if (activeSystem) {
+			/***
+			 *
+			 */
+			const apiURLPathFile = path.join(
+				process.cwd(),
+				'private',
+				'log',
+				activeSystem,
 				'fetch.txt'
 			);
 
@@ -997,7 +1473,7 @@ class Utilities {
 					fs.appendFile(
 						emptyRowsURLPath,
 						`${analyticURL}\r\n`,
-						err => {
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
@@ -1042,7 +1518,7 @@ class Utilities {
 			fs.writeFile(
 				payloadFilePath,
 				JSON.stringify(dataValueBlueprint),
-				err => {
+				(err) => {
 					if (err)
 						logger.printLogMessageInConsole(
 							'error',
@@ -1066,7 +1542,7 @@ class Utilities {
 										new Date(),
 										'ddd, YYYY-MM DD:hh:mm:ssA'
 									)}] - [Total Data Sent: ${loadedDataSize}] --> ${analyticURL}\r\n`,
-									error => {
+									(error) => {
 										if (error)
 											logger.printLogMessageInConsole(
 												'error',
@@ -1089,16 +1565,16 @@ class Utilities {
 										'Message'
 									)
 										? dataMigrationResponse
-											.data
-											.Message
+												.data
+												.Message
 										: _.has(
-											dataMigrationResponse.data,
-											'description'
-										)
-											? dataMigrationResponse
+												dataMigrationResponse.data,
+												'description'
+										  )
+										? dataMigrationResponse
 												.data
 												.description
-											: ''
+										: ''
 								)
 							)} Code: ${chalk.yellow(
 								chalk.bold(
@@ -1147,7 +1623,7 @@ class Utilities {
 					fs.appendFile(
 						apiURLAlreadySentPathFile,
 						`${analyticURL}\n`,
-						err => {
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
@@ -1215,15 +1691,88 @@ class Utilities {
 						);
 					fs.appendFile(
 						logsPathFile,
-						`Total Number Of Data Remained To Be Sent::: ${globalURL.length -
-						alreadySentURL.length}\r\n`,
-						err => {
+						`Total Number Of Data Remained To Be Sent::: ${
+							globalURL.length -
+							alreadySentURL.length
+						}\r\n`,
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
 									err,
 									activeSystem,
 									activeJob
+								);
+						}
+					);
+				});
+			} catch (error) {
+				/***
+				 *
+				 */
+				logger.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		} catch (error) {
+			/***
+			 *
+			 */
+			logger.printLogMessageInConsole('error', error, activeSystem);
+		}
+	};
+
+	savingSuccessLogInfoInFileDataFromAPI = (
+		globalURL,
+		alreadySentURL,
+		dirName,
+		activeSystem,
+		isDataFromAPI
+	) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		try {
+			/***
+			 *
+			 */
+			const logsPathFile = path.join(
+				dirName,
+				'private',
+				'log',
+				activeSystem,
+				'success.txt'
+			);
+
+			/***
+			 *
+			 */
+			try {
+				fs.open(logsPathFile, 'a', (err, fd) => {
+					if (err)
+						logger.printLogMessageInConsole(
+							'error',
+							err,
+							activeSystem
+						);
+					fs.appendFile(
+						logsPathFile,
+						`Total Number Of Data Remained To Be Sent::: ${
+							globalURL.length -
+							alreadySentURL.length
+						}\r\n`,
+						(err) => {
+							if (err)
+								logger.printLogMessageInConsole(
+									'error',
+									err,
+									activeSystem
 								);
 						}
 					);
