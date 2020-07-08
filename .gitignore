@@ -6,8 +6,10 @@ public
 report.*
 logs/res/*
 auth.config.js
+api.config.js
 api-auth.config.js
 metadata.config.js
 batch/*
 logs/res/*
 private/log/*
+app.auth.js

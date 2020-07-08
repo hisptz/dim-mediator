@@ -55,6 +55,29 @@ class MediatorService {
 		return APIUrl;
 	}
 
+	/***
+	 *
+	 */
+	async generateAnalyticsURLDataFromAPI(
+		appGlobalConfig,
+		activeSystem,
+		pageDetails
+	) {
+		const arrURL = [];
+		const marginal =
+			_.has(pageDetails, 'total') && _.has(pageDetails, 'pageSize')
+				? Math.ceil(pageDetails.total / pageDetails.pageSize)
+				: 1;
+		if (activeSystem && marginal) {
+			for (let i = 1; i <= marginal; i++) {
+				arrURL.push(
+					`${appGlobalConfig[activeSystem].dataFromURL}api/payloads?page=${i}`
+				);
+			}
+			return arrURL;
+		}
+	}
+
 	getFormattedDimensionCOForDataElement = async (dx, activeSystem) => {
 		const logger = new Logger();
 		const utilities = new Utilities();
@@ -66,7 +89,7 @@ class MediatorService {
 			if (dimensionMetadata === 'dimension=co') {
 				return dimensionMetadata;
 			} else {
-				console.log
+				console.log;
 				await utilities.joinBySymbol(dimensionMetadata, '&');
 			}
 		} else {

@@ -14,7 +14,7 @@ const _ = require('lodash');
 const Logger = require('../../logs/logger.log');
 const SystemInfo = require('../system/details.system');
 const Utilities = require('../../utils/utils');
-const mediatorConfig = require('../../config/metadata.config');
+const appGlobalConfig = require('../../config/metadata.config');
 
 /***
  *
@@ -23,12 +23,12 @@ class AppInfo {
 	/***
 	 *
 	 */
-	constructor() { }
+	constructor() {}
 
 	/***
 	 *
 	 */
-	getWelcomeInfo = async currentRunningSystem => {
+	getWelcomeInfo = async (currentRunningSystem) => {
 		/***
 		 *
 		 */
@@ -105,7 +105,7 @@ class AppInfo {
 	 *
 	 */
 	getDataExchangeLogInfo = async (
-		mediatorConfig,
+		appGlobalConfig,
 		globalUrl,
 		alreadySentUrl,
 		activeSystem
@@ -143,7 +143,7 @@ class AppInfo {
 				'info',
 				`Data Sent ${chalk.green(
 					chalk.bold(
-						mediatorConfig[
+						appGlobalConfig[
 							activeSystem
 						].systemInfo.from.name.toUpperCase()
 					)
@@ -228,13 +228,13 @@ class AppInfo {
 				logger.printLogMessageInConsole(
 					'info',
 					`Object: ${
-					_.has(conflict, 'object')
-						? chalk.bold(conflict.object)
-						: null
+						_.has(conflict, 'object')
+							? chalk.bold(conflict.object)
+							: null
 					} - Reason: ${
-					_.has(conflict, 'value')
-						? chalk.red(conflict.value)
-						: null
+						_.has(conflict, 'value')
+							? chalk.red(conflict.value)
+							: null
 					}`,
 					activeSystem
 				);
@@ -307,13 +307,13 @@ class AppInfo {
 				logger.printLogMessageInConsole(
 					'info',
 					`Object: ${
-					_.has(conflict, 'object')
-						? chalk.bold(conflict.object)
-						: null
+						_.has(conflict, 'object')
+							? chalk.bold(conflict.object)
+							: null
 					} - Reason: ${
-					_.has(conflict, 'value')
-						? chalk.red(conflict.value)
-						: null
+						_.has(conflict, 'value')
+							? chalk.red(conflict.value)
+							: null
 					}`,
 					activeSystem
 				);
@@ -386,13 +386,13 @@ class AppInfo {
 				logger.printLogMessageInConsole(
 					'info',
 					`Object: ${
-					_.has(conflict, 'object')
-						? chalk.bold(conflict.object)
-						: null
+						_.has(conflict, 'object')
+							? chalk.bold(conflict.object)
+							: null
 					} - Reason: ${
-					_.has(conflict, 'value')
-						? chalk.red(conflict.value)
-						: null
+						_.has(conflict, 'value')
+							? chalk.red(conflict.value)
+							: null
 					}`,
 					activeSystem
 				);
@@ -407,6 +407,143 @@ class AppInfo {
 			`------------------------------------------------------------------------------\n`,
 			activeSystem
 		);
+	};
+
+	/***
+	 *
+	 */
+	printingTimestampForEverySuccessMessageDataFromAPI = (
+		dirName,
+		activeSystem,
+		isDataFromAPI
+	) => {
+		/***
+		 *
+		 */
+		const logger = new Logger();
+		/***
+		 *
+		 */
+		let initialMessage = ``;
+		/***
+		 *
+		 */
+		if (activeSystem && isDataFromAPI) {
+			initialMessage += `\r\n\n----------------------------------------------------------------------------------------------------------\n`;
+			initialMessage += `DIM Data Exchange Mediator LOGS By Date:  ${date.format(
+				new Date(),
+				'ddd, MMM. DD YYYY h:m:s A'
+			)} - Developed By: UDSM DHIS2 Team\n`;
+			initialMessage += `**********************************************************************************************************\n`;
+			const dataSuccessLogFilePath = path.join(
+				dirName,
+				'private',
+				'log',
+				activeSystem,
+				'success.txt'
+			);
+
+			/***
+			 *
+			 */
+			try {
+				/***
+				 *
+				 */
+				fs.open(dataSuccessLogFilePath, 'a', (err, fd) => {
+					/***
+					 *
+					 */
+					if (err)
+						logger.printLogMessageInConsole(
+							'error',
+							err,
+							activeSystem
+						);
+					fs.appendFile(
+						dataSuccessLogFilePath,
+						`${initialMessage}`,
+						(err) => {
+							if (err)
+								logger.printLogMessageInConsole(
+									'error',
+									err,
+									activeSystem
+								);
+						}
+					);
+				});
+			} catch (error) {
+				/***
+				 *
+				 */
+
+				this.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		} else {
+			/***
+			 *
+			 */
+			initialMessage += `\r\n\n----------------------------------------------------------------------------------------------------------\n`;
+			initialMessage += `DIM Data Exchange Mediator LOGS By Date:  ${date.format(
+				new Date(),
+				'ddd, MMM. DD YYYY h:m:s A'
+			)} - Developed By: UDSM DHIS2 Team\n`;
+			initialMessage += `**********************************************************************************************************\n`;
+			const dataSuccessLogFilePath = path.join(
+				dirName,
+				'private',
+				'log',
+				activeSystem,
+				'success.txt'
+			);
+
+			/***
+			 *
+			 */
+			try {
+				/***
+				 *
+				 */
+				fs.open(dataSuccessLogFilePath, 'a', (err, fd) => {
+					/***
+					 *
+					 */
+					if (err)
+						logger.printLogMessageInConsole(
+							'error',
+							err,
+							activeSystem
+						);
+					fs.appendFile(
+						dataSuccessLogFilePath,
+						`${initialMessage}`,
+						(err) => {
+							if (err)
+								logger.printLogMessageInConsole(
+									'error',
+									err,
+									activeSystem
+								);
+						}
+					);
+				});
+			} catch (error) {
+				/***
+				 *
+				 */
+
+				this.printLogMessageInConsole(
+					'error',
+					error,
+					activeSystem
+				);
+			}
+		}
 	};
 
 	/***
@@ -466,7 +603,7 @@ class AppInfo {
 					fs.appendFile(
 						dataSuccessLogFilePath,
 						`${initialMessage}`,
-						err => {
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
@@ -526,7 +663,7 @@ class AppInfo {
 					fs.appendFile(
 						dataSuccessLogFilePath,
 						`${initialMessage}`,
-						err => {
+						(err) => {
 							if (err)
 								logger.printLogMessageInConsole(
 									'error',
@@ -600,7 +737,7 @@ class AppInfo {
 				fs.appendFile(
 					consoleLogsFilePath,
 					`${initialMessage}`,
-					err => {
+					(err) => {
 						if (err)
 							logger.printLogMessageInConsole(
 								'error',

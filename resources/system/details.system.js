@@ -25,10 +25,10 @@ class SystemInfo {
 	/**
 	 *
 	 */
-	getActiveSystem = mediatorConfig => {
+	getActiveSystem = appGlobalConfig => {
 		return _.uniq(
-			_.filter(_.keys(mediatorConfig), config => {
-				return mediatorConfig[config].isAllowed;
+			_.filter(_.keys(appGlobalConfig), config => {
+				return appGlobalConfig[config].isAllowed;
 			})
 		);
 	};
@@ -42,14 +42,14 @@ class SystemInfo {
 	/**
 	 *
 	 */
-	getCurrentRunningBatch = (mediatorConfig, activeSystem, utilInstance) => {
-		return mediatorConfig
+	getCurrentRunningBatch = (appGlobalConfig, activeSystem, utilInstance) => {
+		return appGlobalConfig
 			? _.flattenDeep(
 				_.filter(
-					_.keys(mediatorConfig[activeSystem]),
+					_.keys(appGlobalConfig[activeSystem]),
 					key => {
 						return utilInstance.isObject(
-							mediatorConfig[activeSystem][
+							appGlobalConfig[activeSystem][
 							key
 							]
 						);
@@ -62,27 +62,27 @@ class SystemInfo {
 	/**
 	 *
 	 */
-	isUsingHIMMediatorSystem = (mediatorConfig, activeSystem) => {
-		return mediatorConfig && activeSystem
-			? mediatorConfig[activeSystem].importURL
+	isUsingHIMMediatorSystem = (appGlobalConfig, activeSystem) => {
+		return appGlobalConfig && activeSystem
+			? appGlobalConfig[activeSystem].importURL
 			: '';
 	};
 
 	/**
 	 *
 	 */
-	getActiveSystemImportURL = (mediatorConfig, activeSystem) => {
-		return mediatorConfig && activeSystem
-			? mediatorConfig[activeSystem].importURL
+	getActiveSystemImportURL = (appGlobalConfig, activeSystem) => {
+		return appGlobalConfig && activeSystem
+			? appGlobalConfig[activeSystem].importURL
 			: '';
 	};
 
 	/**
 	 *
 	 */
-	getCurrentRunningSystemCOC = (mediatorConfig, activeSystem) => {
-		return mediatorConfig && activeSystem
-			? mediatorConfig[activeSystem].defaultCOC
+	getCurrentRunningSystemCOC = (appGlobalConfig, activeSystem) => {
+		return appGlobalConfig && activeSystem
+			? appGlobalConfig[activeSystem].defaultCOC
 			: '';
 	};
 
@@ -90,7 +90,7 @@ class SystemInfo {
 	 *
 	 */
 	getDataSetUidForCurrentJob = (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob
@@ -98,8 +98,8 @@ class SystemInfo {
 		/***
 		 * 
 		 */
-		return mediatorConfig && activeSystem
-			? mediatorConfig[activeSystem][activeBatch][activeJob].dataSet
+		return appGlobalConfig && activeSystem
+			? appGlobalConfig[activeSystem][activeBatch][activeJob].dataSet
 				.id
 			: '';
 	};
@@ -107,29 +107,29 @@ class SystemInfo {
 	/**
 	 *
 	 */
-	getCurrentRunningJob = (mediatorConfig, activeSystem, utilInstance) => {
+	getCurrentRunningJob = (appGlobalConfig, activeSystem, utilInstance) => {
 		return _.flattenDeep(
-			_.map(_.keys(mediatorConfig[activeSystem]), key => {
+			_.map(_.keys(appGlobalConfig[activeSystem]), key => {
 				return utilInstance.isObject(
-					mediatorConfig[activeSystem][key]
+					appGlobalConfig[activeSystem][key]
 				)
 					? _.filter(
 						_.keys(
-							mediatorConfig[activeSystem][
+							appGlobalConfig[activeSystem][
 							key
 							]
 						),
 						subKey => {
 							return (
 								utilInstance.isObject(
-									mediatorConfig[
+									appGlobalConfig[
 									activeSystem
 									][key][subKey]
 								) &&
-								mediatorConfig[
+								appGlobalConfig[
 								activeSystem
 								][key][subKey] &&
-								mediatorConfig[
+								appGlobalConfig[
 								activeSystem
 								][key][subKey]['execute']
 							);

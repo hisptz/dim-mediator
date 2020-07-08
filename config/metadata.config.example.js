@@ -1,7 +1,7 @@
 /****
  * Configuration File
  */
-const mediatorConfig = {
+const appGlobalConfig = {
     example_system: {
         isAllowed: true,
         isUsingHIM: true,
@@ -69,4 +69,4 @@ const mediatorConfig = {
 /***
  * 
  */
-module.exports = mediatorConfig;
+module.exports = appGlobalConfig;

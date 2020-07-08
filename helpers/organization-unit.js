@@ -19,13 +19,13 @@ class OrganizationUnitManager {
 	/***
 	 *
 	 */
-	constructor() { }
+	constructor() {}
 
 	/***
 	 *
 	 */
 	getOrgUnits = async (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob
@@ -34,25 +34,25 @@ class OrganizationUnitManager {
 		if (activeSystem) {
 			const dhis = 'https://dhis.moh.go.tz/';
 			const orgUnitParam =
-				mediatorConfig &&
-					mediatorConfig[activeSystem][activeBatch][activeJob][
+				appGlobalConfig &&
+				appGlobalConfig[activeSystem][activeBatch][activeJob][
 					'isExecuted'
-					] &&
-					mediatorConfig[activeSystem][activeBatch][activeJob].ou
-						.orgUnits.hasUids
-					? mediatorConfig[activeSystem][activeBatch][
-						activeJob
-					].ou.orgUnits.orgUnitUids
-					: mediatorConfig[activeSystem][activeBatch][
-						activeJob
-					].ou.orgUnits.orgUnitLevel;
+				] &&
+				appGlobalConfig[activeSystem][activeBatch][activeJob].ou
+					.orgUnits.hasUids
+					? appGlobalConfig[activeSystem][activeBatch][
+							activeJob
+					  ].ou.orgUnits.orgUnitUids
+					: appGlobalConfig[activeSystem][activeBatch][
+							activeJob
+					  ].ou.orgUnits.orgUnitLevel;
 			const isUsingLiveDhis2 =
-				mediatorConfig[activeSystem].isUsingLiveDhis2;
+				appGlobalConfig[activeSystem].isUsingLiveDhis2;
 			const dataFromURL = isUsingLiveDhis2
 				? dhis
-				: mediatorConfig[activeSystem].dataFromURL;
+				: appGlobalConfig[activeSystem].dataFromURL;
 			const sourceSystemName =
-				mediatorConfig[activeSystem].systemInfo.from.name;
+				appGlobalConfig[activeSystem].systemInfo.from.name;
 			logger.printLogMessageInConsole(
 				'default',
 				`Organization units loaded from ${chalk.green(
