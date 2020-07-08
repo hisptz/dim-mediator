@@ -2,7 +2,7 @@
  * 
  */
 const AuthConfig = {
-    planrep: {
+    systemName : {
         username: 'dimmediator',
         password: 'DIM@2020',
         authSecondarySystem: {

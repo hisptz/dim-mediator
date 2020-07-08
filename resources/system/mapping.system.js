@@ -22,7 +22,7 @@ class SystemMapping {
 	 *
 	 */
 	getActiveSystemDXMapping = (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob
@@ -30,14 +30,14 @@ class SystemMapping {
 		/***
 		 *
 		 */
-		return mediatorConfig[activeSystem] &&
+		return appGlobalConfig[activeSystem] &&
 			_.has(
-				mediatorConfig[activeSystem][activeBatch][activeJob],
+				appGlobalConfig[activeSystem][activeBatch][activeJob],
 				'mapping'
 			) &&
-			mediatorConfig[activeSystem][activeBatch][activeJob].mapping
+			appGlobalConfig[activeSystem][activeBatch][activeJob].mapping
 				.dx.hasMapping
-			? mediatorConfig[activeSystem][activeBatch][activeJob].mapping
+			? appGlobalConfig[activeSystem][activeBatch][activeJob].mapping
 					.dx.data
 			: {};
 	};
@@ -46,7 +46,7 @@ class SystemMapping {
 	 *
 	 */
 	getActiveSystemOrgUnitMapping = (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob
@@ -54,14 +54,14 @@ class SystemMapping {
 		/***
 		 *
 		 */
-		return mediatorConfig[activeSystem] &&
+		return appGlobalConfig[activeSystem] &&
 			_.has(
-				mediatorConfig[activeSystem][activeBatch][activeJob],
+				appGlobalConfig[activeSystem][activeBatch][activeJob],
 				'mapping'
 			) &&
-			mediatorConfig[activeSystem][activeBatch][activeJob].mapping
+			appGlobalConfig[activeSystem][activeBatch][activeJob].mapping
 				.ou.hasMapping
-			? mediatorConfig[activeSystem][activeBatch][activeJob].mapping
+			? appGlobalConfig[activeSystem][activeBatch][activeJob].mapping
 					.ou.orgUnits
 			: {};
 	};
@@ -70,7 +70,7 @@ class SystemMapping {
 	 *
 	 */
 	getDataElementUid = async (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob,
@@ -85,13 +85,13 @@ class SystemMapping {
 		 *
 		 */
 		const hasMappingProp = await _.has(
-			mediatorConfig[activeSystem][activeBatch][activeJob],
+			appGlobalConfig[activeSystem][activeBatch][activeJob],
 			'mapping'
 		);
 		/***
 		 *
 		 */
-		const hasMapping = await mediatorConfig[activeSystem][activeBatch][
+		const hasMapping = await appGlobalConfig[activeSystem][activeBatch][
 			activeJob
 		].mapping.ou.hasMapping;
 
@@ -134,7 +134,7 @@ class SystemMapping {
 	 *
 	 */
 	getOrgUnitUid = async (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob,
@@ -150,27 +150,27 @@ class SystemMapping {
 		 *
 		 */
 		const hasMappingProp = await _.has(
-			mediatorConfig[activeSystem][activeBatch][activeJob],
+			appGlobalConfig[activeSystem][activeBatch][activeJob],
 			'mapping'
 		);
 		/***
 		 *
 		 */
-		const hasMapping = await mediatorConfig[activeSystem][activeBatch][
+		const hasMapping = await appGlobalConfig[activeSystem][activeBatch][
 			activeJob
 		].mapping.ou.hasMapping;
 
 		/***
 		 *
 		 */
-		const isCode = await mediatorConfig[activeSystem][activeBatch][
+		const isCode = await appGlobalConfig[activeSystem][activeBatch][
 			activeJob
 		].mapping.ou.mappingCriteria.code;
 
 		/***
 		 *
 		 */
-		const isUid = await mediatorConfig[activeSystem][activeBatch][
+		const isUid = await appGlobalConfig[activeSystem][activeBatch][
 			activeJob
 		].mapping.ou.mappingCriteria.id;
 

@@ -91,7 +91,6 @@ class Logger {
 								`${date.format(new Date(), '(ddd) YYYY-MM-DD hh:mm:ssA')}: ${msg}\n`,
 								err => {
 									if (err) {
-										// console.log("CAINAMIST::: ", err);
 										// this.printLogMessageInConsole('error', err, activeSystem);
 									}
 								}
