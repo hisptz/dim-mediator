@@ -1,14 +1,14 @@
-
 const axios = require('axios');
 class DataValueManagement {
-    constructor() { }
+    constructor() {}
 
     /**
-         *
-         */
+     *
+     */
     getAnalyticsResults = async (analyticsURL, systemAuth) => {
         return await new Promise(async (resolve, reject) => {
             const results = await axios.get(analyticsURL, systemAuth);
+
             if (results) {
                 resolve(results.data);
             } else {
@@ -18,8 +18,15 @@ class DataValueManagement {
     };
 
     /**
-         *
-         */
+     *
+     */
+    getAnalyticsResultsDataFromAPI = async (analyticsURL, APIAuth) => {
+        return await axios.get(analyticsURL, APIAuth);
+    };
+
+    /**
+     *
+     */
     getDataValuesImportTemplates = () => {
         console.log("I'M HERE");
         return {
