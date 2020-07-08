@@ -37,6 +37,7 @@
     "minimist": "^1.2.5",
     "node-emoji": "^1.10.0",
     "request": "^2.88.2",
+    "rxjs": "^6.6.0",
     "uuid": "^8.1.0"
   },
   "devDependencies": {

@@ -19,13 +19,13 @@ class OrganizationUnitManager {
 	/***
 	 *
 	 */
-	constructor() { }
+	constructor() {}
 
 	/***
 	 *
 	 */
 	getOrgUnits = async (
-		mediatorConfig,
+		appGlobalConfig,
 		activeSystem,
 		activeBatch,
 		activeJob
@@ -34,29 +34,29 @@ class OrganizationUnitManager {
 		if (activeSystem) {
 			const dhis = 'https://dhis.moh.go.tz/';
 			const orgUnitParam =
-				mediatorConfig &&
-					mediatorConfig[activeSystem][activeBatch][activeJob][
+				appGlobalConfig &&
+				appGlobalConfig[activeSystem][activeBatch][activeJob][
 					'isExecuted'
-					] &&
-					mediatorConfig[activeSystem][activeBatch][activeJob].ou
-						.orgUnits.hasUids
-					? mediatorConfig[activeSystem][activeBatch][
-						activeJob
-					].ou.orgUnits.orgUnitUids
-					: mediatorConfig[activeSystem][activeBatch][
-						activeJob
-					].ou.orgUnits.orgUnitLevel;
+				] &&
+				appGlobalConfig[activeSystem][activeBatch][activeJob].ou
+					.orgUnits.hasUids
+					? appGlobalConfig[activeSystem][activeBatch][
+							activeJob
+					  ].ou.orgUnits.orgUnitUids
+					: appGlobalConfig[activeSystem][activeBatch][
+							activeJob
+					  ].ou.orgUnits.orgUnitLevel;
 			const isUsingLiveDhis2 =
-				mediatorConfig[activeSystem].isUsingLiveDhis2;
+				appGlobalConfig[activeSystem].isUsingLiveDhis2;
 			const dataFromURL = isUsingLiveDhis2
 				? dhis
-				: mediatorConfig[activeSystem].dataFromURL;
-			const orgUnitUsed =
-				mediatorConfig[activeSystem].systemInfo.from;
+				: appGlobalConfig[activeSystem].dataFromURL;
+			const sourceSystemName =
+				appGlobalConfig[activeSystem].systemInfo.from.name;
 			logger.printLogMessageInConsole(
 				'default',
 				`Organization units loaded from ${chalk.green(
-					orgUnitUsed.toUpperCase()
+					sourceSystemName.toUpperCase()
 				)} system`,
 				activeSystem
 			);
@@ -85,7 +85,7 @@ class OrganizationUnitManager {
 		let orgunitsURL = ``;
 
 		if (utilities.isArray(orgUnitParam)) {
-			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=id:in:${orgUnitParam}&paging=false`;
+			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=id:in:[${orgUnitParam}]&paging=false`;
 		} else {
 			orgunitsURL = `${dataFromURL}api/organisationUnits.json?fields=id,name,code&filter=level:eq:${orgUnitParam}&paging=false`;
 		}
