@@ -108,6 +108,7 @@ class MediatorInit {
 		 */
 		this.GlobalConfig = await this.getMediatorConfiguration();
 		const organizationUnit = new OrganizationUnitManager();
+		const metadataManager = new MetadatManager();
 		const utilities = new Utilities();
 		const logger = new Logger();
 		const appInfo = new AppInfo();
@@ -251,6 +252,8 @@ class MediatorInit {
 									activeBatch,
 									_.clone(this.GlobalConfig)
 								);
+
+								await metadataManager.getDataset(_.clone(this.GlobalConfig), activeSystem, activeBatch, activeJob);
 							}
 						}
 					}

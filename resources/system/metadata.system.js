@@ -3,6 +3,8 @@
  */
 const _ = require('lodash');
 const path = require('path');
+const axios = require('axios');
+const chalk = require('chalk');
 const fs = require('fs');
 
 /***
@@ -12,7 +14,9 @@ const MediatorService = require('../../services/mediator.service');
 const APIService = require('../../services/api.service');
 const Utilities = require('../../utils/utils');
 const Logger = require('../../logs/logger.log');
-const appGlobalConfig = require('../../config/metadata.config.example');
+const Authenticate = require('../../auth/system.auth');
+const AuthConfig = require('../../config/auth.config');
+const APIAuthConfig = require('../../config/api-auth.config');
 
 /***
  *
@@ -41,28 +45,18 @@ class MetadataManager {
              */
             return await _.flatten(
                 _.map(
-                    appGlobalConfig[activeSystem][activeBatch][
-                        activeJob
-                    ].pe.periods,
-                    (period) => {
-                        return appGlobalConfig[activeSystem][
-                                activeBatch
-                            ][activeJob].pe.subPeriods.length > 0 ?
+                    appGlobalConfig[activeSystem][activeBatch][activeJob].pe.periods,
+                    period => {
+                        return appGlobalConfig[activeSystem][activeBatch][activeJob].pe
+                            .subPeriods.length > 0 ?
                             _.map(
-                                appGlobalConfig[
-                                    activeSystem
-                                ][activeBatch][activeJob]
-                                .pe.subPeriods,
-                                (subPeriod) => {
-                                    return (
-                                        period +
-                                        subPeriod
-                                    );
+                                appGlobalConfig[activeSystem][activeBatch][activeJob].pe
+                                .subPeriods,
+                                subPeriod => {
+                                    return period + subPeriod;
                                 }
                             ) :
-                            _.has(period, 'id') ?
-                            period.id :
-                            period;
+                            _.has(period, 'id') ? period.id : period;
                     }
                 )
             );
@@ -72,28 +66,18 @@ class MetadataManager {
              */
             return await _.flatten(
                 _.map(
-                    appGlobalConfig[activeSystem][activeBatch][
-                        activeJob
-                    ].pe.periods,
-                    (period) => {
-                        return appGlobalConfig[activeSystem][
-                                activeBatch
-                            ][activeJob].pe.subPeriods.length > 0 ?
+                    appGlobalConfig[activeSystem][activeBatch][activeJob].pe.periods,
+                    period => {
+                        return appGlobalConfig[activeSystem][activeBatch][activeJob].pe
+                            .subPeriods.length > 0 ?
                             _.map(
-                                appGlobalConfig[
-                                    activeSystem
-                                ][activeBatch][activeJob]
-                                .pe.subPeriods,
-                                (subPeriod) => {
-                                    return (
-                                        period +
-                                        subPeriod
-                                    );
+                                appGlobalConfig[activeSystem][activeBatch][activeJob].pe
+                                .subPeriods,
+                                subPeriod => {
+                                    return period + subPeriod;
                                 }
                             ) :
-                            _.has(period, 'id') ?
-                            period.id :
-                            period;
+                            _.has(period, 'id') ? period.id : period;
                     }
                 )
             );
@@ -103,7 +87,12 @@ class MetadataManager {
     /***
      *
      */
-    getActiveSystemDataDimension = (appGlobalConfig, activeSystem, activeBatch, activeJob) => {
+    getActiveSystemDataDimension = (
+        appGlobalConfig,
+        activeSystem,
+        activeBatch,
+        activeJob
+    ) => {
         /***
          *
          */
@@ -113,10 +102,8 @@ class MetadataManager {
              */
             return _.chunk(
                 _.map(
-                    appGlobalConfig[activeSystem][activeBatch][
-                        activeJob
-                    ].dx.data,
-                    (data) => {
+                    appGlobalConfig[activeSystem][activeBatch][activeJob].dx.data,
+                    data => {
                         return data;
                     }
                 ),
@@ -128,10 +115,8 @@ class MetadataManager {
              */
             return _.chunk(
                 _.map(
-                    appGlobalConfig[activeSystem][activeBatch][
-                        activeJob
-                    ].dx.data,
-                    (data) => {
+                    appGlobalConfig[activeSystem][activeBatch][activeJob].dx.data,
+                    data => {
                         return data;
                     }
                 ),
@@ -197,10 +182,7 @@ class MetadataManager {
                  *
                  */
                 for (const orgUnit of await orgUnits) {
-                    const formattedOU = utilities.joinBySymbol(
-                        orgUnit,
-                        ';'
-                    );
+                    const formattedOU = utilities.joinBySymbol(orgUnit, ';');
                     /***
                      *
                      */
@@ -224,48 +206,36 @@ class MetadataManager {
                              *
                              */
                             try {
-                                fs.open(
-                                    apiURLPathFile,
-                                    'a',
-                                    (err, fd) => {
-                                        if (err)
-                                            logger.printLogMessageInConsole(
-                                                'error',
-                                                err,
-                                                activeSystem
-                                            );
-                                        try {
-                                            fs.appendFile(
-                                                apiURLPathFile,
-                                                `${formattedURL}\r\n`,
-                                                (
-                                                    err
-                                                ) => {
-                                                    if (
-                                                        err
-                                                    )
-                                                        logger.printLogMessageInConsole(
-                                                            'error',
-                                                            err,
-                                                            activeSystem
-                                                        );
-                                                }
-                                            );
-                                        } catch (error) {
-                                            logger.printLogMessageInConsole(
-                                                'error',
-                                                error,
-                                                activeSystem
-                                            );
-                                        }
+                                fs.open(apiURLPathFile, 'a', (err, fd) => {
+                                    if (err)
+                                        logger.printLogMessageInConsole(
+                                            'error',
+                                            err,
+                                            activeSystem
+                                        );
+                                    try {
+                                        fs.appendFile(
+                                            apiURLPathFile,
+                                            `${formattedURL}\r\n`,
+                                            err => {
+                                                if (err)
+                                                    logger.printLogMessageInConsole(
+                                                        'error',
+                                                        err,
+                                                        activeSystem
+                                                    );
+                                            }
+                                        );
+                                    } catch (error) {
+                                        logger.printLogMessageInConsole(
+                                            'error',
+                                            error,
+                                            activeSystem
+                                        );
                                     }
-                                );
+                                });
                             } catch (error) {
-                                logger.printLogMessageInConsole(
-                                    'error',
-                                    error,
-                                    activeSystem
-                                );
+                                logger.printLogMessageInConsole('error', error, activeSystem);
                             }
                         }
                     }
@@ -314,44 +284,76 @@ class MetadataManager {
             pageDetails
         );
 
-        await _.forEach(formattedURLs, (formattedURL) => {
+        await _.forEach(formattedURLs, formattedURL => {
             try {
                 fs.open(apiURLPathFile, 'a', (err, fd) => {
-                    if (err)
-                        logger.printLogMessageInConsole(
-                            'error',
-                            err,
-                            activeSystem
-                        );
+                    if (err) logger.printLogMessageInConsole('error', err, activeSystem);
                     try {
-                        fs.appendFile(
-                            apiURLPathFile,
-                            `${formattedURL}\r\n`,
-                            (err) => {
-                                if (err)
-                                    logger.printLogMessageInConsole(
-                                        'error',
-                                        err,
-                                        activeSystem
-                                    );
-                            }
-                        );
+                        fs.appendFile(apiURLPathFile, `${formattedURL}\r\n`, err => {
+                            if (err)
+                                logger.printLogMessageInConsole('error', err, activeSystem);
+                        });
                     } catch (error) {
-                        logger.printLogMessageInConsole(
-                            'error',
-                            error,
-                            activeSystem
-                        );
+                        logger.printLogMessageInConsole('error', error, activeSystem);
                     }
                 });
             } catch (error) {
+                logger.printLogMessageInConsole('error', error, activeSystem);
+            }
+        });
+    };
+
+    getDataset = async (
+        appGlobalConfig,
+        activeSystem,
+        activeBatch,
+        activeJob
+    ) => {
+        const authenticator = new Authenticate();
+        const logger = new Logger();
+        const systemSourceURL = await appGlobalConfig[activeSystem].dataToURL;
+        const dataSet = await appGlobalConfig[activeSystem][activeBatch][activeJob]
+            .dataSet;
+        const auth = authenticator.getAPIAuth(APIAuthConfig);
+
+        const payloadURL = `${_.endsWith(systemSourceURL, '/') ? systemSourceURL : `${systemSourceURL}/`}api/identifiableObjects/${dataSet.id}.json`;
+        const response = await axios.get(
+            payloadURL,
+            authenticator.getSecondarySystemAuthForDataExchange(
+                AuthConfig,
+                activeSystem
+            )
+        );
+        if (response.data) {
+            const dataSet = {
+                name: response.data.name,
+                id: response.data.id,
+            };
+            let url = '';
+            if (_.has(APIAuthConfig, 'url')) {
+                if (_.endsWith(APIAuthConfig.url, '/')) {
+                    url = `${APIAuthConfig.url}api/dataSets`;
+                } else {
+                    url = `${APIAuthConfig.url}/api/dataSets`;
+                }
+            }
+            const axiosResponse = await axios
+                .post(url, dataSet, auth)
+                .catch(err => err);
+            if (_.has(axiosResponse.data, 'message')) {
                 logger.printLogMessageInConsole(
-                    'error',
-                    error,
+                    'success',
+                    `${chalk.green('Message: ')} - ${chalk.bold(axiosResponse.data.message)}`,
+                    activeSystem
+                );
+            } else {
+                logger.printLogMessageInConsole(
+                    'success',
+                    `Dataset <${chalk.bold(chalk.green(axiosResponse.data.name))}> with id <${chalk.bold(chalk.green(axiosResponse.data.id))}> is successfully created in system`,
                     activeSystem
                 );
             }
-        });
+        }
     };
 }
 

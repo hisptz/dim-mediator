@@ -13,3 +13,4 @@ batch/*
 logs/res/*
 private/log/*
 app.auth.js
+payload.config.js
