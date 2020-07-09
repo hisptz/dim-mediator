@@ -23,13 +23,13 @@ const APIAuthConfig = require('../../config/api-auth.config');
  */
 class MetadataManager {
     /***
-     *
-     */
-    constructor() {}
+       *
+       */
+    constructor() { }
 
     /***
-     *
-     */
+       *
+       */
     getActiveSystemPeriodDimension = async (
         appGlobalConfig,
         activeSystem,
@@ -37,47 +37,47 @@ class MetadataManager {
         activeJob
     ) => {
         /***
-         *
-         */
-        if (!activeBatch) {
-            /***
              *
              */
+        if (!activeBatch) {
+            /***
+                   *
+                   */
             return await _.flatten(
                 _.map(
                     appGlobalConfig[activeSystem][activeBatch][activeJob].pe.periods,
                     period => {
                         return appGlobalConfig[activeSystem][activeBatch][activeJob].pe
-                            .subPeriods.length > 0 ?
-                            _.map(
+                            .subPeriods.length > 0
+                            ? _.map(
                                 appGlobalConfig[activeSystem][activeBatch][activeJob].pe
-                                .subPeriods,
+                                    .subPeriods,
                                 subPeriod => {
                                     return period + subPeriod;
                                 }
-                            ) :
-                            _.has(period, 'id') ? period.id : period;
+                            )
+                            : _.has(period, 'id') ? period.id : period;
                     }
                 )
             );
         } else {
             /***
-             *
-             */
+                   *
+                   */
             return await _.flatten(
                 _.map(
                     appGlobalConfig[activeSystem][activeBatch][activeJob].pe.periods,
                     period => {
                         return appGlobalConfig[activeSystem][activeBatch][activeJob].pe
-                            .subPeriods.length > 0 ?
-                            _.map(
+                            .subPeriods.length > 0
+                            ? _.map(
                                 appGlobalConfig[activeSystem][activeBatch][activeJob].pe
-                                .subPeriods,
+                                    .subPeriods,
                                 subPeriod => {
                                     return period + subPeriod;
                                 }
-                            ) :
-                            _.has(period, 'id') ? period.id : period;
+                            )
+                            : _.has(period, 'id') ? period.id : period;
                     }
                 )
             );
@@ -85,8 +85,8 @@ class MetadataManager {
     };
 
     /***
-     *
-     */
+       *
+       */
     getActiveSystemDataDimension = (
         appGlobalConfig,
         activeSystem,
@@ -94,12 +94,12 @@ class MetadataManager {
         activeJob
     ) => {
         /***
-         *
-         */
-        if (activeBatch) {
-            /***
              *
              */
+        if (activeBatch) {
+            /***
+                   *
+                   */
             return _.chunk(
                 _.map(
                     appGlobalConfig[activeSystem][activeBatch][activeJob].dx.data,
@@ -111,8 +111,8 @@ class MetadataManager {
             );
         } else {
             /***
-             *
-             */
+                   *
+                   */
             return _.chunk(
                 _.map(
                     appGlobalConfig[activeSystem][activeBatch][activeJob].dx.data,
@@ -126,8 +126,8 @@ class MetadataManager {
     };
 
     /***
-     *
-     */
+       *
+       */
     prepareAnalyticsURLForDataFetch = async (
         activeSystem,
         activeBatch,
@@ -138,15 +138,15 @@ class MetadataManager {
         apiFromURL
     ) => {
         /***
-         *
-         */
+             *
+             */
         const mediatorService = new MediatorService();
         const utilities = new Utilities();
         const logger = new Logger();
         let apiURLPathFile = '';
         /***
-         *
-         */
+             *
+             */
         if (activeJob) {
             apiURLPathFile = path.join(
                 process.cwd(),
@@ -159,8 +159,8 @@ class MetadataManager {
             );
         } else {
             /***
-             *
-             */
+                   *
+                   */
             apiURLPathFile = path.join(
                 __dirname,
                 'private',
@@ -171,29 +171,29 @@ class MetadataManager {
         }
 
         /***
-         *
-         */
-        if ((await activeSystem) && (await orgUnits) && (await periods)) {
-            /***
              *
              */
+        if ((await activeSystem) && (await orgUnits) && (await periods)) {
+            /***
+                   *
+                   */
             for (const period of await periods) {
                 /***
-                 *
-                 */
+                         *
+                         */
                 for (const orgUnit of await orgUnits) {
                     const formattedOU = utilities.joinBySymbol(orgUnit, ';');
                     /***
-                     *
-                     */
+                               *
+                               */
                     for (const elements of await data) {
                         /***
-                         *
-                         */
+                                     *
+                                     */
                         for (const dxProps of await elements) {
                             /***
-                             *
-                             */
+                                           *
+                                           */
                             const formattedURL = await mediatorService.generateAnalyticsURL(
                                 activeSystem,
                                 apiFromURL,
@@ -203,8 +203,8 @@ class MetadataManager {
                             );
 
                             /***
-                             *
-                             */
+                                           *
+                                           */
                             try {
                                 fs.open(apiURLPathFile, 'a', (err, fd) => {
                                     if (err)
@@ -251,14 +251,14 @@ class MetadataManager {
         const apiService = new APIService();
 
         /***
-         *
-         */
+             *
+             */
         const mediatorService = new MediatorService();
         const logger = new Logger();
         let apiURLPathFile = '';
         /***
-         *
-         */
+             *
+             */
         if (activeSystem) {
             apiURLPathFile = path.join(
                 process.cwd(),
@@ -274,9 +274,9 @@ class MetadataManager {
             activeSystem
         );
 
-        const pageDetails = (await _.has(APIResults.data, 'pager')) ?
-            APIResults.data.pager :
-            {};
+        const pageDetails = (await _.has(APIResults.data, 'pager'))
+            ? APIResults.data.pager
+            : {};
 
         const formattedURLs = await mediatorService.generateAnalyticsURLDataFromAPI(
             appGlobalConfig,
@@ -311,12 +311,12 @@ class MetadataManager {
     ) => {
         const authenticator = new Authenticate();
         const logger = new Logger();
-        const systemSourceURL = await appGlobalConfig[activeSystem].dataToURL;
+        const systemDestinationURL = await appGlobalConfig[activeSystem].dataToURL;
         const dataSet = await appGlobalConfig[activeSystem][activeBatch][activeJob]
             .dataSet;
         const auth = authenticator.getAPIAuth(APIAuthConfig);
 
-        const payloadURL = `${_.endsWith(systemSourceURL, '/') ? systemSourceURL : `${systemSourceURL}/`}api/identifiableObjects/${dataSet.id}.json`;
+        const payloadURL = `${_.endsWith(systemDestinationURL, '/') ? systemDestinationURL : `${systemDestinationURL}/`}api/identifiableObjects/${dataSet.id}.json`;
         const response = await axios.get(
             payloadURL,
             authenticator.getSecondarySystemAuthForDataExchange(
@@ -343,7 +343,7 @@ class MetadataManager {
             if (_.has(axiosResponse.data, 'message')) {
                 logger.printLogMessageInConsole(
                     'success',
-                    `${chalk.green('Message: ')} - ${chalk.bold(axiosResponse.data.message)}`,
+                    `${chalk.green(chalk.bold('Message: '))} - ${chalk.bold(axiosResponse.data.message)}`,
                     activeSystem
                 );
             } else {
@@ -352,6 +352,58 @@ class MetadataManager {
                     `Dataset <${chalk.bold(chalk.green(axiosResponse.data.name))}> with id <${chalk.bold(chalk.green(axiosResponse.data.id))}> is successfully created in system`,
                     activeSystem
                 );
+            }
+        }
+    };
+
+    getDataDetail = async (
+        appGlobalConfig,
+        activeSystem,
+        activeBatch,
+        activeJob
+    ) => {
+        const authenticator = new Authenticate();
+        const logger = new Logger();
+        const systemSourceURL = await appGlobalConfig[activeSystem].dataFromURL;
+        const dxs = await appGlobalConfig[activeSystem][activeBatch][activeJob].dx;
+        const auth = authenticator.getAPIAuth(APIAuthConfig);
+
+        for (const dx of await dxs.data) {
+            const payloadURL = `${_.endsWith(systemSourceURL, '/') ? systemSourceURL : `${systemSourceURL}/`}api/identifiableObjects/${dx.id}.json`;
+            const response = await axios.get(
+                payloadURL,
+                authenticator.getSystemAuth(AuthConfig, activeSystem)
+            );
+            if (response.data) {
+                const dxPayload = {
+                    name: response.data.name,
+                    id: response.data.id,
+                    type: _.head(_.takeRight(_.split(response.data.href, '/'), 2)),
+                };
+                let url = '';
+                if (_.has(APIAuthConfig, 'url')) {
+                    if (_.endsWith(APIAuthConfig.url, '/')) {
+                        url = `${APIAuthConfig.url}api/datas`;
+                    } else {
+                        url = `${APIAuthConfig.url}/api/datas`;
+                    }
+                }
+                const axiosResponse = await axios
+                    .post(url, dxPayload, auth)
+                    .catch(err => err);
+                if (_.has(axiosResponse.data, 'message')) {
+                    logger.printLogMessageInConsole(
+                        'success',
+                        `${chalk.green(chalk.bold('Message: '))} - ${chalk.bold(axiosResponse.data.message)}`,
+                        activeSystem
+                    );
+                } else {
+                    logger.printLogMessageInConsole(
+                        'success',
+                        `Data <${chalk.bold(chalk.green(axiosResponse.data.name))}> with id <${chalk.bold(chalk.green(axiosResponse.data.id))}> is successfully created in system`,
+                        activeSystem
+                    );
+                }
             }
         }
     };

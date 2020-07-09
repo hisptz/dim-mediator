@@ -242,6 +242,12 @@ class MediatorInit {
 									activeJob
 								);
 
+								/**
+								 * 
+								 */
+								await metadataManager.getDataset(_.clone(this.GlobalConfig), activeSystem, activeBatch, activeJob);
+								await metadataManager.getDataDetail(_.clone(this.GlobalConfig), activeSystem, activeBatch, activeJob);
+
 								/***
 								 *
 								 */
@@ -252,8 +258,6 @@ class MediatorInit {
 									activeBatch,
 									_.clone(this.GlobalConfig)
 								);
-
-								await metadataManager.getDataset(_.clone(this.GlobalConfig), activeSystem, activeBatch, activeJob);
 							}
 						}
 					}
