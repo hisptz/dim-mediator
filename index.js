@@ -158,6 +158,12 @@ class MediatorInit {
 					isDataFromAPI
 				);
 			} else {
+				const system = _.clone(this.GlobalConfig);
+				const systemInfo = system[activeSystem].systemInfo;
+				for (const systemUid of await _.keys(systemInfo) ) {
+					await metadataManager.sendSystem(systemInfo[systemUid], activeSystem);
+				}
+
 				try {
 					await appInfo.printingTimestampForSpecificLogOnStart(
 						activeSystem,
